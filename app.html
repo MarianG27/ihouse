@@ -33,7 +33,7 @@ input:focus{border-color:var(--g);outline:none}
 #login label{font-weight:600;font-size:14px;margin:12px 0 6px}
 #login form .b{margin-top:24px;padding:14px}
 #login small{margin-top:14px;color:var(--mut);font-size:13px}
-#app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+#app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
 aside{background:#fff;border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
 aside img{height:28px;align-self:flex-start;margin:0 8px 26px;flex-shrink:0}
 aside button.nv{text-align:left;background:none;border:0;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--mut);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -155,6 +155,16 @@ aside{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom, 0px));left:1
 aside img,aside .bt{display:none}
 aside button.nv{flex:1;justify-content:center;padding:10px 4px;font-size:13px;gap:6px}
 main{padding:20px 14px calc(120px + env(safe-area-inset-bottom, 0px))}main h1{font-size:24px}.two{grid-template-columns:1fr}.gr{grid-template-columns:1fr}.hero{padding:22px;gap:16px}.box{padding:16px}.set{padding:14px}.set h3{flex-wrap:wrap}input[type=text],input[type=email],input[type=password],input[type=number],select{font-size:16px}.thread{max-width:100%}.ibot-bar{max-width:100%!important}.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{padding:14px;min-height:96px}.m{max-width:100%}.m .q{flex-wrap:wrap}.dr>div:first-child{min-width:100%}.dr input[type=number]{width:88px}.dr>div:first-child{min-width:100%}.cb-row{grid-template-columns:80px 1fr 62px}
+}
+html,body{max-width:100%}
+main,.box,.hero,.set{min-width:0}
+main{overflow-wrap:anywhere}
+@media(max-width:800px){
+#app{grid-template-columns:minmax(0,1fr)}
+main{width:100%;max-width:100%}
+.two,.gr{grid-template-columns:minmax(0,1fr)}
+.cb-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) auto}
+.ibot-thread{max-height:calc(100vh - 290px);max-height:calc(100dvh - 290px)}
 }
 </style>
 </head>
@@ -281,6 +291,13 @@ function sendFree(t){
   S.chat.push({id:++uid,free:true,text:ibotReply(t.trim()),time:tm()});
 }
 
+function thr(){return document.querySelector('.ibot-thread')}
+function updBtn(){var t=thr(),b=$('#scrollTopBtn');if(!t||!b)return;b.classList.toggle('show',t.scrollHeight-t.scrollTop-t.clientHeight>40)}
+function toBottom(smooth){
+  var t=thr();if(!t)return;
+  t.scrollTo({top:t.scrollHeight,behavior:smooth?'smooth':'auto'});
+  if(!smooth){var l=t.lastElementChild;if(l&&l.scrollIntoView)l.scrollIntoView({block:'nearest'});t.scrollTop=t.scrollHeight;updBtn()}
+}
 function render(){
   var ii=$('#ibotIn'),keepVal=ii?ii.value:null,keepFocus=ii&&document.activeElement===ii;
   document.querySelectorAll('.nv').forEach(function(b){b.classList.toggle('on',b.dataset.v===view)});
@@ -343,12 +360,10 @@ function render(){
   $('#view').innerHTML=h;save();
   if(focusDim){var fi=$('#dimIn');if(fi)fi.focus();focusDim=false}
   if(view==='ibot'){
-    var th=document.querySelector('.ibot-thread');
-    if(th){
-      if(userSentFlag)th.scrollTop=th.scrollHeight;
-      var atBottom=(th.scrollHeight-th.scrollTop-th.clientHeight)<40;
-      var btn=$('#scrollTopBtn');if(btn)btn.classList.toggle('show',!atBottom);
-    }
+    var nin=$('#ibotIn');
+    if(nin&&ii&&keepVal!=null){nin.value=keepVal;if(keepFocus)nin.focus({preventScroll:true})}
+    if(userSentFlag)toBottom(false);
+    updBtn();
   }
   userSentFlag=false;
 }
@@ -375,7 +390,7 @@ document.addEventListener('click',function(e){
   else if(a==='ar'){var n=$('#nr');if(!n.value.trim()){n.focus();return}S.rooms.push({id:++uid,name:n.value.trim(),devices:[]})}
   else if(a==='send'){var i=$('#ibotIn');sendFree(i.value);i.value='';userSentFlag=true}
   else if(a==='askibot'){view='ibot';sendFree('Cum pot să economisesc curent electric?');userSentFlag=true}
-  else if(a==='totop'){var th=document.querySelector('.ibot-thread');if(th)th.scrollTo({top:th.scrollHeight,behavior:'smooth'})}
+  else if(a==='totop'){toBottom(true);return}
   render();
 });
 document.addEventListener('change',function(e){
@@ -405,13 +420,13 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'&&dimId){dimId=null;render();return}
-  if(e.target&&e.target.id==='ibotIn'&&e.key==='Enter'){e.preventDefault();sendFree(e.target.value);e.target.value='';render()}
+  if(e.target&&e.target.id==='ibotIn'&&e.key==='Enter'){e.preventDefault();sendFree(e.target.value);e.target.value='';userSentFlag=true;render()}
 });
 document.addEventListener('scroll',function(e){
   var t=e.target;
   if(t&&t.classList&&t.classList.contains('ibot-thread')){
     var btn=$('#scrollTopBtn');
-    if(btn)btn.classList.toggle('show',t.scrollTop>40);
+    updBtn();
   }
 },true);
 $('#lf').onsubmit=function(e){e.preventDefault();try{sessionStorage.setItem('ihouse1-in','1')}catch(x){}show(true)};
