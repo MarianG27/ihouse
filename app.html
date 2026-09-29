@@ -73,7 +73,7 @@ main h1{font-size:28px;letter-spacing:-.035em;font-weight:800;margin-bottom:22px
 .tile b{font-size:15px;line-height:1.25}
 .tile small{color:var(--mut);font-size:12px}
 .tile.on small{color:#e2f7e8}
-.tile .hrt{font-size:14px}
+.tile .hrt{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;flex:none;color:#e5322d}.tile .hrt svg{width:18px;height:18px;display:block;fill:#e5322d}.tile.on .hrt{color:#fff}
 .cell{display:flex;flex-direction:column;gap:8px}
 .cell .tile{flex:1}
 .cell{position:relative}
@@ -124,6 +124,11 @@ img{max-width:100%}
 .dr label{font-size:13px;color:var(--mut);display:flex;gap:6px;align-items:center;white-space:nowrap}
 .dr input[type=checkbox]{width:18px;height:18px;accent-color:var(--g)}
 .dr small{display:block;font-size:11px;color:var(--mut)}
+.hbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--mut);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s,background .15s}
+.hbtn svg{width:16px;height:16px;fill:none;transition:fill .15s}
+.hbtn:hover{border-color:#e5322d;color:#e5322d}
+.hbtn[aria-pressed=true]{border-color:#e5322d;color:#e5322d;background:#fff1f0}
+.hbtn[aria-pressed=true] svg{fill:#e5322d}
 .add{display:flex;gap:8px;margin-top:12px}
 .add input{flex:1;min-width:0}
 .add select{border:2px solid var(--line);border-radius:12px;padding:0 10px;font:inherit;background:#fff}
@@ -226,9 +231,10 @@ function offOn(){
     }
     setDev(d,false);
   })});
-  sys('Modul OFF activat: luminile și prizele neesențiale s-au oprit.'+(asked?' Echipamentele cu ❤️ rămân pornite până răspunzi lui ibot.':''));
+  sys('Modul OFF activat: luminile și prizele neesențiale s-au oprit.'+(asked?' Echipamentele protejate rămân pornite până răspunzi lui ibot.':''));
 }
 function setCount(n){S.count=Math.max(0,n);if(S.count===0&&!S.off)offOn();else if(S.count>0&&S.off){S.off=false;S.rooms.forEach(function(r){r.devices.forEach(function(d){d.heartAsked=false})});sys('Cineva a intrat: Modul OFF s-a dezactivat.')}}
+var HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
 var BULB='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
 function dimSheet(d){
   var rn='';S.rooms.forEach(function(r){if(r.devices.indexOf(d)>-1)rn=r.name});
@@ -339,7 +345,7 @@ function render(){
   }else if(view==='rooms'){
     h='<h1>Camere</h1>'+S.rooms.map(function(r){
       return '<div class="sec">'+esc(r.name)+'<small>Apasă pe un card ca să-l pornești sau să-l oprești</small></div><div class="tiles">'+(r.devices.length?r.devices.map(function(d){
-        return '<div class="cell'+(d.type==='light'?' lt':'')+'"><button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+'"><div class="top"><b>'+esc(d.name)+'</b>'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează">❤️</span>':'')+'</div><small>'+(d.type==='light'?'Bec':'Priză')+(d.essential?' esențială':'')+'</small></button>'+(d.type==='light'?'<button class="bb" data-a="dim" data-d="'+d.id+'" aria-label="Intensitate '+esc(d.name)+'" title="Intensitate">'+BULB+'</button>':'')+'</div>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
+        return '<div class="cell'+(d.type==='light'?' lt':'')+'"><button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+'"><div class="top"><b>'+esc(d.name)+'</b>'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează" role="img" aria-label="Protejat">'+HEART+'</span>':'')+'</div><small>'+(d.type==='light'?'Bec':'Priză')+(d.essential?' esențială':'')+'</small></button>'+(d.type==='light'?'<button class="bb" data-a="dim" data-d="'+d.id+'" aria-label="Intensitate '+esc(d.name)+'" title="Intensitate">'+BULB+'</button>':'')+'</div>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
   }else if(view==='ibot'){
     h='<h1>ibot</h1><div class="ibotWrap"><div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="send">Trimite</button></div>'+
     '<div class="thread ibot-thread">'+(S.chat.length?S.chat.map(function(m){
@@ -352,7 +358,7 @@ function render(){
   }else{
     h='<h1>Setări</h1>'+S.rooms.map(function(r){
       return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
-      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+(d.type==='light'?'Bec':'Priză')+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><label title="Nu se oprește automat la Modul OFF cât timp rulează — ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)"><input type="checkbox" data-k="ht" data-d="'+d.id+'"'+(d.heart?' checked':'')+'>❤️ Protejat</label><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
+      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+(d.type==='light'?'Bec':'Priză')+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
       '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip"><option value="light">Bec</option><option value="socket">Priză</option></select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
       '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div><p style="font-size:13px;color:var(--mut)">Check 0 înseamnă că ibot nu întreabă. În demo, 1 secundă reprezintă 1 minut.</p>';
   }
@@ -380,6 +386,7 @@ document.addEventListener('click',function(e){
   else if(a==='dim'){dimId=d.id;focusDim=true}
   else if(a==='dimx'){if(e.target.closest('.sheet')&&!e.target.closest('button')){return}dimId=null}
   else if(a==='tg')setDev(d,!d.on);
+  else if(a==='ht'){d.heart=!d.heart;if(!d.heart){d.heartAsked=false;d.heartUntil=null}}
   else if(a==='nstop'&&m){setDev(find(m.dev),false);m.done='Stinge';userSentFlag=true}
   else if(a==='nkeep'&&m){var x=find(m.dev);x.since=Date.now();x.asked=false;m.done='Las aprinsă';userSentFlag=true}
   else if(a==='hset'&&m){var inp=document.getElementById('hmin'+m.id);var mins=inp?Math.max(1,Math.round(+inp.value||0)):0;if(!mins){if(inp)inp.focus();return}var dv=find(m.dev);dv.heartUntil=Date.now()+mins*1000;m.done='Program setat: '+mins+' min';userSentFlag=true}
