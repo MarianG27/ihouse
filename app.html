@@ -182,7 +182,7 @@ main{width:100%;max-width:100%}
 <label for="em">Email</label><input id="em" type="email" required autocomplete="username" placeholder="nume@exemplu.ro">
 <label for="pw">Parolă</label><input id="pw" type="password" required autocomplete="current-password">
 <button class="b" type="submit">Intră în cont</button>
-<small>Versiune demo: orice date sunt acceptate și nu părăsesc browserul.</small>
+<small id="lerr" style="color:var(--red)"></small>
 </form>
 </div>
 
@@ -198,25 +198,80 @@ main{width:100%;max-width:100%}
 <main id="view"></main>
 </div>
 
+<div id="sy" class="hide" style="position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:#c4302b;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:30"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
-var KEY='ihouse1-state',SCALE=60,uid=100,view='home',userSentFlag=false,dimId=null,focusDim=false;
-var def={count:2,off:false,price:0.95,chat:[],rooms:[
-{id:1,name:'Sufragerie',devices:[{id:1,name:'Bec tavan',type:'light',on:true,check:60,watt:60,hours:5},{id:2,name:'Televizor',type:'socket',on:true,check:0,watt:120,hours:4},{id:3,name:'Lampa de citit',type:'socket',on:false,check:0,watt:40,hours:2}]},
-{id:2,name:'Bucătărie',devices:[{id:4,name:'Bec bucătărie',type:'light',on:true,check:30,watt:40,hours:3},{id:5,name:'Frigider',type:'socket',on:true,check:0,essential:true,watt:150,hours:24},{id:6,name:'Espressor',type:'socket',on:false,check:0,watt:1200,hours:0.3}]},
-{id:3,name:'Dormitor',devices:[{id:7,name:'Bec dormitor',type:'light',on:false,check:0,watt:15,hours:3}]},
-{id:4,name:'Baie',devices:[{id:8,name:'Mașină de spălat',type:'socket',on:false,check:0,heart:true,watt:700,hours:1.5}]}]};
-var S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!S.rooms)S=JSON.parse(JSON.stringify(def));
-if(S.price==null)S.price=0.95;
-S.rooms.forEach(function(r){r.devices.forEach(function(d){if(d.on&&!d.since)d.since=Date.now();if(d.watt==null)d.watt=d.type==='light'?9:50;if(d.hours==null)d.hours=d.type==='light'?3:2;if(d.heart==null)d.heart=false;if(d.type==='light'&&d.level==null)d.level=1})});
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+var SB=supabase.createClient('https://xqkrzcwatwjkgzylzhfu.supabase.co','sb_publishable_PkRAGJmaZgxb_skTsRCoKA_BCK8oHWL');
+var SCALE=1,BIG=1e9,uid=BIG,view='home',userSentFlag=false,dimId=null,focusDim=false;
+var S={count:0,off:false,price:0.95,chat:[],rooms:[],types:[]},snap={},sSnap='',busy=false,dirty=false,timer=null,ready=false,rt=null,rtT=null;
+var ms=function(t){return t?Date.parse(t):null},iso=function(n){return n?new Date(n).toISOString():null};
+function note(t){var n=$('#sy');n.textContent=t||'';n.classList.toggle('hide',!t)}
+function tyOf(d){return S.types.filter(function(t){return t.code===d.type})[0]||{}}
+function isDim(d){return !!tyOf(d).dimmable}
+function tn(d){return tyOf(d).name||d.type}
+function typeOpts(){return S.types.map(function(t){return '<option value="'+esc(t.code)+'">'+esc(t.name)+'</option>'}).join('')}
+function tRow(t){return {code:t.code,name:t.name,dimmable:!!t.dimmable,default_watt:t.default_watt||0,default_hours:t.default_hours||0}}
+function rRow(r,i){return {name:r.name,position:i}}
+function dRow(d,r){var t=tyOf(d);return {room_id:r.id,type_id:t.id||null,name:d.name,state:d.on?1:0,level:d.level!=null?d.level:1,watt:d.watt||0,hours_per_day:d.hours||0,check_minutes:d.check||0,essential:!!d.essential,protected:!!d.heart,on_since:iso(d.since),asked:!!d.asked,protected_asked:!!d.heartAsked,protected_until:iso(d.heartUntil)}}
+function mRow(m){return {role:m.sys?'sys':m.me?'me':'bot',kind:m.sys||m.me?null:m.heart?'protected':m.free?'free':'check',device_id:m.dev&&find(m.dev)?m.dev:null,body:m.text,done:m.done||null}}
+function sRow(){return {people_count:S.count,off_mode:!!S.off,price_per_kwh:S.price}}
+function mark(){snap={};S.types.forEach(function(t){snap['t'+t.id]=JSON.stringify(tRow(t))});S.rooms.forEach(function(r,i){snap['r'+r.id]=JSON.stringify(rRow(r,i));r.devices.forEach(function(d){snap['d'+d.id]=JSON.stringify(dRow(d,r))})});S.chat.forEach(function(m){snap['m'+m.id]=JSON.stringify(mRow(m))});sSnap=JSON.stringify(sRow())}
+async function load(){
+  var q=await Promise.all([SB.from('device_types').select('*').order('id'),SB.from('rooms').select('*').order('position').order('id'),SB.from('devices').select('*').order('id'),SB.from('settings').select('*').eq('id',1).maybeSingle(),SB.from('ibot_messages').select('*').order('id')]);
+  for(var i=0;i<q.length;i++)if(q[i].error)throw q[i].error;
+  if(!q[3].data)throw new Error('Acest cont nu are acces la casă (nu este proprietar).');
+  S.types=q[0].data;var tc={};S.types.forEach(function(t){tc[t.id]=t.code});
+  S.rooms=q[1].data.map(function(r){return {id:r.id,name:r.name,devices:[]}});
+  var rm={};S.rooms.forEach(function(r){rm[r.id]=r});
+  q[2].data.forEach(function(d){var r=rm[d.room_id];if(r)r.devices.push({id:d.id,name:d.name,type:tc[d.type_id],on:d.state===1,level:+d.level,watt:d.watt,hours:+d.hours_per_day,check:d.check_minutes,essential:d.essential,heart:d.protected,since:ms(d.on_since)||(d.state===1?Date.now():null),asked:d.asked,heartAsked:d.protected_asked,heartUntil:ms(d.protected_until)})});
+  var st=q[3].data;S.count=st.people_count;S.off=st.off_mode;S.price=+st.price_per_kwh;
+  S.chat=q[4].data.map(function(m){return {id:m.id,dev:m.device_id||0,text:m.body,done:m.done,time:new Date(m.created_at).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'}),sys:m.role==='sys',me:m.role==='me',free:m.kind==='free',heart:m.kind==='protected'}});
+  uid=BIG;mark();
+}
+async function push(){
+  timer=null;if(!ready)return;
+  if(busy){dirty=true;return}
+  busy=true;var remap=false;
+  try{
+    var seen={},idm={};
+    var up=async function(tab,key,o,row){
+      var j=JSON.stringify(row);
+      if(o.id>=BIG){var old=o.id,x=await SB.from(tab).insert(row).select('id').single();if(x.error)throw x.error;o.id=x.data.id;idm[old]=o.id;remap=true}
+      else if(snap[key+o.id]!==j){var y=await SB.from(tab).update(row).eq('id',o.id);if(y.error)throw y.error}
+      snap[key+o.id]=j;seen[key+o.id]=1;
+    };
+    for(var a=0;a<S.types.length;a++)await up('device_types','t',S.types[a],tRow(S.types[a]));
+    for(var i=0;i<S.rooms.length;i++){var r=S.rooms[i];await up('rooms','r',r,rRow(r,i));for(var k=0;k<r.devices.length;k++)await up('devices','d',r.devices[k],dRow(r.devices[k],r))}
+    S.chat.forEach(function(m){if(idm[m.dev])m.dev=idm[m.dev]});
+    for(var c=0;c<S.chat.length;c++)await up('ibot_messages','m',S.chat[c],mRow(S.chat[c]));
+    var tabs={t:'device_types',r:'rooms',d:'devices',m:'ibot_messages'};
+    for(var key in snap){if(!seen[key]){var z=await SB.from(tabs[key[0]]).delete().eq('id',key.slice(1));if(z.error)throw z.error;delete snap[key]}}
+    var sj=JSON.stringify(sRow());
+    if(sj!==sSnap){var u=await SB.from('settings').update(sRow()).eq('id',1);if(u.error)throw u.error;sSnap=sj}
+    note('');
+  }catch(x){note('Nu s-a salvat: '+(x.message||x))}
+  busy=false;
+  if(dirty){dirty=false;save()}
+  if(remap)render();
+}
+function save(){if(!ready)return;clearTimeout(timer);timer=setTimeout(push,250)}
+function subscribe(){
+  if(rt)SB.removeChannel(rt);
+  var ev=function(){clearTimeout(rtT);rtT=setTimeout(async function(){
+    if(busy||timer||dirty)return;var a=document.activeElement;if(a&&a.tagName==='INPUT')return;
+    try{await load()}catch(x){return}
+    if(S.count===0&&!S.off)offOn();
+    render();
+  },500)};
+  rt=SB.channel('ihouse').on('postgres_changes',{event:'*',schema:'public',table:'devices'},ev).on('postgres_changes',{event:'*',schema:'public',table:'settings'},ev).on('postgres_changes',{event:'*',schema:'public',table:'ibot_messages'},ev).subscribe();
+}
 function tm(){return new Date().toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})}
 function sys(t){S.chat.push({id:++uid,dev:0,text:t,time:tm(),sys:true})}
 function find(id){var f=null;S.rooms.forEach(function(r){r.devices.forEach(function(d){if(d.id==id)f=d})});return f}
-function setDev(d,on){d.on=on;if(on&&d.type==='light'&&!(d.level>0))d.level=1;d.since=on?Date.now():null;d.asked=false;d.heartUntil=null;if(!on)d.heartAsked=false}
+function setDev(d,on){d.on=on;if(on&&isDim(d)&&!(d.level>0))d.level=1;d.since=on?Date.now():null;d.asked=false;d.heartUntil=null;if(!on)d.heartAsked=false}
 function offOn(){
   S.off=true;
   var asked=false;
@@ -278,8 +333,8 @@ function ibotReply(t){
     })});
     var pool=named.length?named:inRoom;
     if(!pool.length)return 'Spune-mi ce bec sau ce cameră să reglez, de exemplu „setează becul din bucătărie la 50%”.';
-    var ls=pool.filter(function(d){return d.type==='light'});
-    if(!ls.length)return 'Doar becurile au intensitate. '+pool[0].name+' este o priză, o pot doar porni sau opri.';
+    var ls=pool.filter(function(d){return isDim(d)});
+    if(!ls.length)return 'Doar echipamentele reglabile au intensitate. '+pool[0].name+' îl pot doar porni sau opri.';
     if(lvl==null)return 'La ce intensitate? Dă-mi o valoare între 0 și 1 sau un procent, de exemplu 50%.';
     lvl=Math.round(Math.min(1,Math.max(0,lvl))*100)/100;
     ls.forEach(function(d){d.level=lvl;if(lvl>0&&!d.on)setDev(d,true);else if(lvl===0&&d.on)setDev(d,false)});
@@ -304,6 +359,7 @@ function toBottom(smooth){
   t.scrollTo({top:t.scrollHeight,behavior:smooth?'smooth':'auto'});
   if(!smooth){var l=t.lastElementChild;if(l&&l.scrollIntoView)l.scrollIntoView({block:'nearest'});t.scrollTop=t.scrollHeight;updBtn()}
 }
+function typesBox(){return '<div class="set"><h3>Tipuri de echipament</h3>'+S.types.map(function(t){return '<div class="dr"><div><input type="text" value="'+esc(t.name)+'" data-k="tn" data-t="'+t.id+'" aria-label="Nume tip"><small>'+esc(t.code)+'</small></div><div><input type="number" min="0" value="'+t.default_watt+'" data-k="tw" data-t="'+t.id+'" aria-label="Putere implicită"><small>W implicit</small></div><div><input type="number" min="0" step="0.1" value="'+t.default_hours+'" data-k="th" data-t="'+t.id+'" aria-label="Ore implicite"><small>ore/zi</small></div><label><input type="checkbox" data-k="td" data-t="'+t.id+'"'+(t.dimmable?' checked':'')+'>Reglabil</label><button class="b r s" data-a="dt" data-t="'+t.id+'">Șterge</button></div>'}).join('')+'<div class="add"><input type="text" id="ntn" placeholder="Tip nou (ex: Ventilator)" aria-label="Tip nou"><button class="b s" data-a="at">Adaugă tipul</button></div></div>'}
 function render(){
   var ii=$('#ibotIn'),keepVal=ii?ii.value:null,keepFocus=ii&&document.activeElement===ii;
   document.querySelectorAll('.nv').forEach(function(b){b.classList.toggle('on',b.dataset.v===view)});
@@ -345,7 +401,7 @@ function render(){
   }else if(view==='rooms'){
     h='<h1>Camere</h1>'+S.rooms.map(function(r){
       return '<div class="sec">'+esc(r.name)+'<small>Apasă pe un card ca să-l pornești sau să-l oprești</small></div><div class="tiles">'+(r.devices.length?r.devices.map(function(d){
-        return '<div class="cell'+(d.type==='light'?' lt':'')+'"><button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+'"><div class="top"><b>'+esc(d.name)+'</b>'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează" role="img" aria-label="Protejat">'+HEART+'</span>':'')+'</div><small>'+(d.type==='light'?'Bec':'Priză')+(d.essential?' esențială':'')+'</small></button>'+(d.type==='light'?'<button class="bb" data-a="dim" data-d="'+d.id+'" aria-label="Intensitate '+esc(d.name)+'" title="Intensitate">'+BULB+'</button>':'')+'</div>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
+        return '<div class="cell'+(isDim(d)?' lt':'')+'"><button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+'"><div class="top"><b>'+esc(d.name)+'</b>'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează" role="img" aria-label="Protejat">'+HEART+'</span>':'')+'</div><small>'+tn(d)+(d.essential?' esențială':'')+'</small></button>'+(isDim(d)?'<button class="bb" data-a="dim" data-d="'+d.id+'" aria-label="Intensitate '+esc(d.name)+'" title="Intensitate">'+BULB+'</button>':'')+'</div>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
   }else if(view==='ibot'){
     h='<h1>ibot</h1><div class="ibotWrap"><div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="send">Trimite</button></div>'+
     '<div class="thread ibot-thread">'+(S.chat.length?S.chat.map(function(m){
@@ -358,11 +414,11 @@ function render(){
   }else{
     h='<h1>Setări</h1>'+S.rooms.map(function(r){
       return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
-      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+(d.type==='light'?'Bec':'Priză')+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
-      '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip"><option value="light">Bec</option><option value="socket">Priză</option></select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
-      '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div><p style="font-size:13px;color:var(--mut)">Check 0 înseamnă că ibot nu întreabă. În demo, 1 secundă reprezintă 1 minut.</p>';
+      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
+      '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip">'+typeOpts()+'</select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
+      '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div>'+typesBox()+'<p style="font-size:13px;color:var(--mut)">Check 0 înseamnă că ibot nu întreabă.</p>';
   }
-  if(view==='rooms'&&dimId){var dd=find(dimId);if(dd&&dd.type==='light')h+=dimSheet(dd);else dimId=null}
+  if(view==='rooms'&&dimId){var dd=find(dimId);if(dd&&isDim(dd))h+=dimSheet(dd);else dimId=null}
   $('#view').innerHTML=h;save();
   if(focusDim){var fi=$('#dimIn');if(fi)fi.focus();focusDim=false}
   if(view==='ibot'){
@@ -389,12 +445,14 @@ document.addEventListener('click',function(e){
   else if(a==='ht'){d.heart=!d.heart;if(!d.heart){d.heartAsked=false;d.heartUntil=null}}
   else if(a==='nstop'&&m){setDev(find(m.dev),false);m.done='Stinge';userSentFlag=true}
   else if(a==='nkeep'&&m){var x=find(m.dev);x.since=Date.now();x.asked=false;m.done='Las aprinsă';userSentFlag=true}
-  else if(a==='hset'&&m){var inp=document.getElementById('hmin'+m.id);var mins=inp?Math.max(1,Math.round(+inp.value||0)):0;if(!mins){if(inp)inp.focus();return}var dv=find(m.dev);dv.heartUntil=Date.now()+mins*1000;m.done='Program setat: '+mins+' min';userSentFlag=true}
+  else if(a==='hset'&&m){var inp=document.getElementById('hmin'+m.id);var mins=inp?Math.max(1,Math.round(+inp.value||0)):0;if(!mins){if(inp)inp.focus();return}var dv=find(m.dev);dv.heartUntil=Date.now()+mins*60000;m.done='Program setat: '+mins+' min';userSentFlag=true}
   else if(a==='hstop'&&m){setDev(find(m.dev),false);m.done='Oprire imediată';userSentFlag=true}
   else if(a==='dr'){if(confirm('Ștergi camera „'+r.name+'” și tot ce conține?'))S.rooms=S.rooms.filter(function(y){return y!==r})}
   else if(a==='dd')S.rooms.forEach(function(y){y.devices=y.devices.filter(function(z){return z!==d})});
-  else if(a==='ad'){var i=b.parentNode.querySelector('input');if(!i.value.trim()){i.focus();return}var ty=b.parentNode.querySelector('select').value;r.devices.push({id:++uid,name:i.value.trim(),type:ty,on:false,check:0,level:1,watt:ty==='light'?9:50,hours:ty==='light'?3:2})}
+  else if(a==='ad'){var i=b.parentNode.querySelector('input');if(!i.value.trim()){i.focus();return}var tc=b.parentNode.querySelector('select').value,tt=S.types.filter(function(x){return x.code===tc})[0]||{};r.devices.push({id:++uid,name:i.value.trim(),type:tc,on:false,check:0,level:1,watt:tt.default_watt||0,hours:tt.default_hours||0})}
   else if(a==='ar'){var n=$('#nr');if(!n.value.trim()){n.focus();return}S.rooms.push({id:++uid,name:n.value.trim(),devices:[]})}
+  else if(a==='at'){var ni=$('#ntn'),nm=ni.value.trim();if(!nm){ni.focus();return}var cd=nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'tip';if(S.types.some(function(x){return x.code===cd})){alert('Există deja un tip cu acest nume.');return}S.types.push({id:++uid,code:cd,name:nm,dimmable:false,default_watt:50,default_hours:2})}
+  else if(a==='dt'){var tt2=S.types.filter(function(x){return x.id==b.dataset.t})[0];if(tt2&&S.rooms.some(function(rr){return rr.devices.some(function(dd){return dd.type===tt2.code})}))alert('Tipul este folosit de unele echipamente.');else S.types=S.types.filter(function(y){return y!==tt2})}
   else if(a==='send'){var i=$('#ibotIn');sendFree(i.value);i.value='';userSentFlag=true}
   else if(a==='askibot'){view='ibot';sendFree('Cum pot să economisesc curent electric?');userSentFlag=true}
   else if(a==='totop'){toBottom(true);return}
@@ -404,6 +462,7 @@ document.addEventListener('change',function(e){
   var t=e.target;
   if(t.id==='price'){S.price=Math.max(0,+t.value||0);render();return}
   var k=t.dataset.k;if(!k)return;
+  if(t.dataset.t){var tt=S.types.filter(function(x){return x.id==t.dataset.t})[0];if(tt){if(k==='tn'&&t.value.trim())tt.name=t.value.trim();if(k==='td')tt.dimmable=t.checked;if(k==='tw')tt.default_watt=Math.max(0,+t.value||0);if(k==='th')tt.default_hours=Math.max(0,+t.value||0)}save();render();return}
   if(k==='rn'){var r=S.rooms.filter(function(x){return x.id==t.dataset.r})[0];if(t.value.trim())r.name=t.value.trim()}
   else{var d=find(t.dataset.d);
     if(k==='dn'&&t.value.trim())d.name=t.value.trim();
@@ -436,15 +495,19 @@ document.addEventListener('scroll',function(e){
     updBtn();
   }
 },true);
-$('#lf').onsubmit=function(e){e.preventDefault();try{sessionStorage.setItem('ihouse1-in','1')}catch(x){}show(true)};
-$('#out').onclick=function(){try{sessionStorage.removeItem('ihouse1-in')}catch(x){}show(false)};
 function show(v){$('#login').classList.toggle('hide',v);$('#app').classList.toggle('hide',!v);if(v)render()}
-var ok=false;try{ok=sessionStorage.getItem('ihouse1-in')==='1'}catch(e){}
-show(ok);
+async function enter(){
+  try{await load()}catch(x){await SB.auth.signOut();$('#lerr').textContent=x.message||'Eroare la încărcare.';show(false);return}
+  ready=true;show(true);subscribe();
+}
+$('#lf').onsubmit=async function(e){e.preventDefault();$('#lerr').textContent='';var r=await SB.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error){$('#lerr').textContent='Email sau parolă greșite.';return}enter()};
+$('#out').onclick=async function(){ready=false;if(rt)SB.removeChannel(rt);await SB.auth.signOut();show(false)};
+SB.auth.getSession().then(function(r){if(r.data&&r.data.session)enter()});
 
 setInterval(function(){
   var ch=false,now=Date.now();
   S.rooms.forEach(function(r){r.devices.forEach(function(d){
+    if(d.on&&d.heartUntil&&now>=d.heartUntil){setDev(d,false);sys(d.name+': programul s-a terminat, priza a fost oprită.');ch=true}
     if(d.on&&d.check>0&&!d.asked&&d.since&&(now-d.since)/1000*SCALE/60>=d.check){
       d.asked=true;S.chat.push({id:++uid,dev:d.id,text:'Mai folosești '+d.name.toLowerCase()+'? Nu a mai fost stinsă de '+d.check+' minute.',time:tm(),done:null});ch=true}
   })});
