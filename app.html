@@ -121,6 +121,7 @@ img{max-width:100%}
 .dr>div{display:flex;flex-direction:column;gap:2px}
 .dr>div:first-child{flex:1;min-width:150px}
 .dr input[type=number]{width:78px}
+.dr select{border:2px solid var(--line);border-radius:12px;padding:8px 10px;font:inherit;background:#fff}
 .dr label{font-size:13px;color:var(--mut);display:flex;gap:6px;align-items:center;white-space:nowrap}
 .dr input[type=checkbox]{width:18px;height:18px;accent-color:var(--g)}
 .dr small{display:block;font-size:11px;color:var(--mut)}
@@ -261,10 +262,11 @@ function note(t){var n=$('#sy');n.textContent=t||'';n.classList.toggle('hide',!t
 function tyOf(d){return S.types.filter(function(t){return t.code===d.type})[0]||{}}
 function isDim(d){return !!tyOf(d).dimmable}
 function tn(d){return tyOf(d).name||d.type}
+function chOpts(d){var o='<option value="0">—</option>';for(var i=1;i<=6;i++)o+='<option value="'+i+'"'+(d.channel===i?' selected':'')+'>Port '+i+'</option>';return o}
 function typeOpts(){return S.types.map(function(t){return '<option value="'+esc(t.code)+'">'+esc(t.name)+'</option>'}).join('')}
 function tRow(t){return {code:t.code,name:t.name,dimmable:!!t.dimmable,default_watt:t.default_watt||0,default_hours:t.default_hours||0}}
 function rRow(r,i){return {name:r.name,position:i}}
-function dRow(d,r){var t=tyOf(d);return {room_id:r.id,type_id:t.id||null,name:d.name,state:d.on?1:0,level:d.level!=null?d.level:1,watt:d.watt||0,hours_per_day:d.hours||0,check_minutes:d.check||0,essential:!!d.essential,protected:!!d.heart,on_since:iso(d.since),asked:!!d.asked,protected_asked:!!d.heartAsked,protected_until:iso(d.heartUntil)}}
+function dRow(d,r){var t=tyOf(d);return {room_id:r.id,channel:d.channel||null,type_id:t.id||null,name:d.name,state:d.on?1:0,level:d.level!=null?d.level:1,watt:d.watt||0,hours_per_day:d.hours||0,check_minutes:d.check||0,essential:!!d.essential,protected:!!d.heart,on_since:iso(d.since),asked:!!d.asked,protected_asked:!!d.heartAsked,protected_until:iso(d.heartUntil)}}
 function mRow(m){return {role:m.sys?'sys':m.me?'me':'bot',kind:m.sys||m.me?null:m.heart?'protected':m.free?'free':'check',device_id:m.dev&&find(m.dev)?m.dev:null,body:m.text,done:m.done||null}}
 function sRow(){return {people_count:S.count,off_mode:!!S.off,price_per_kwh:S.price}}
 function scRow(x){return {device_id:x.dev,run_at:iso(x.at),action:x.on?1:0}}
@@ -277,7 +279,7 @@ async function load(){
   S.types=q[0].data;var tc={};S.types.forEach(function(t){tc[t.id]=t.code});
   S.rooms=q[1].data.map(function(r){return {id:r.id,name:r.name,devices:[]}});
   var rm={};S.rooms.forEach(function(r){rm[r.id]=r});
-  q[2].data.forEach(function(d){var r=rm[d.room_id];if(r)r.devices.push({id:d.id,name:d.name,type:tc[d.type_id],on:d.state===1,level:+d.level,watt:d.watt,hours:+d.hours_per_day,check:d.check_minutes,essential:d.essential,heart:d.protected,since:ms(d.on_since)||(d.state===1?Date.now():null),asked:d.asked,heartAsked:d.protected_asked,heartUntil:ms(d.protected_until)})});
+  q[2].data.forEach(function(d){var r=rm[d.room_id];if(r)r.devices.push({id:d.id,channel:d.channel||null,name:d.name,type:tc[d.type_id],on:d.state===1,level:+d.level,watt:d.watt,hours:+d.hours_per_day,check:d.check_minutes,essential:d.essential,heart:d.protected,since:ms(d.on_since)||(d.state===1?Date.now():null),asked:d.asked,heartAsked:d.protected_asked,heartUntil:ms(d.protected_until)})});
   var st=q[3].data;S.count=st.people_count;S.off=st.off_mode;S.price=+st.price_per_kwh;
   S.chat=q[4].data.map(function(m){return {id:m.id,dev:m.device_id||0,text:m.body,done:m.done,time:new Date(m.created_at).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'}),sys:m.role==='sys',me:m.role==='me',free:m.kind==='free',heart:m.kind==='protected'}});
   var sq=await SB.from('schedules').select('*').order('run_at');
@@ -546,7 +548,7 @@ function render(){
   }else{
     h='<h1>Setări</h1>'+S.rooms.map(function(r){
       return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
-      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
+      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><div><select data-k="ch" data-d="'+d.id+'" aria-label="Port ESP32">'+chOpts(d)+'</select><small>Port ESP32</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
       '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip">'+typeOpts()+'</select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
       '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div>'+typesBox()+'<p style="font-size:13px;color:var(--mut)">Check 0 înseamnă că ibot nu întreabă.</p>';
   }
@@ -605,7 +607,8 @@ document.addEventListener('change',function(e){
     if(k==='wt')d.watt=Math.max(0,+t.value||0);
     if(k==='hr')d.hours=Math.max(0,+t.value||0);
     if(k==='ck'){d.check=Math.max(0,Math.round(+t.value||0));d.asked=false;if(d.on)d.since=Date.now()}
-    if(k==='es')d.essential=t.checked}
+    if(k==='es')d.essential=t.checked;
+    if(k==='ch'){var v=+t.value||null;if(v)S.rooms.forEach(function(rr){rr.devices.forEach(function(x){if(x!==d&&x.channel===v)x.channel=null})});d.channel=v;save();render();return}}
   save();
 });
 document.addEventListener('input',function(e){
