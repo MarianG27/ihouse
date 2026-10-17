@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ihouse – Aplicație</title>
+<link rel="icon" href="pagelogo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--g:#189947;--gd:#0c5a29;--ink:#17201b;--mut:#56645b;--paper:#f3f7f4;--lamp:#ffe58a;--line:#d9e3dc;--red:#c4302b}
+:root[data-theme="dark"]{--g:#3a3a3a;--gd:#1a1a1a;--ink:#f2f2f2;--mut:#9a9a9a;--paper:#141414;--lamp:#262626;--line:#2e2e2e;--red:#d9534f}
+:root[data-theme="dark"] body{background:#0b0b0b}
+:root[data-theme="dark"] .b{color:#0b0b0b}
+:root[data-theme="dark"] .b.o{background:#161616;color:#f2f2f2;border-color:#f2f2f2}
+:root[data-theme="dark"] .b.o:hover{background:#f2f2f2;color:#0b0b0b}
+:root[data-theme="dark"] .b.r{background:#161616}
+:root[data-theme="dark"] aside,:root[data-theme="dark"] .box,:root[data-theme="dark"] .set,:root[data-theme="dark"] .m.bot,:root[data-theme="dark"] .sheet,:root[data-theme="dark"] .tile,:root[data-theme="dark"] input[type=text],:root[data-theme="dark"] input[type=email],:root[data-theme="dark"] input[type=password],:root[data-theme="dark"] input[type=number],:root[data-theme="dark"] select,:root[data-theme="dark"] .priceIn,:root[data-theme="dark"] .cb-track{background:#161616}
+:root[data-theme="dark"] .m.me{background:linear-gradient(135deg,#3a3a3a,#1c1c1c);box-shadow:none}
+:root[data-theme="dark"] #login .pane{background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.94)),url('https://images.unsplash.com/photo-1755311904955-db548ff83672?fm=jpg&q=70&w=1200&auto=format&fit=crop') center/cover no-repeat}
+*{box-sizing:border-box;margin:0}
+body{font-family:Sora,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:var(--paper);line-height:1.55}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.hide{display:none!important}
+.b{border:0;background:var(--ink);color:#fff;font-weight:600;font-size:14px;padding:10px 20px;border-radius:40px;cursor:pointer}
+.b:hover{background:var(--g)}
+.b.o{background:#fff;color:var(--ink);border:2px solid var(--ink)}
+.b.o:hover{background:var(--ink);color:#fff}
+.b.s{padding:6px 14px;font-size:13px}
+.b.r{background:#fff;color:var(--red);border:2px solid var(--red)}
+.b.r:hover{background:var(--red);color:#fff}
+input[type=text],input[type=email],input[type=password],input[type=number]{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;width:100%}
+input:focus{border-color:var(--g);outline:none}
+#login{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+#login .pane{background:linear-gradient(180deg,rgba(12,90,41,.35),rgba(12,90,41,.92)),url('https://images.unsplash.com/photo-1755311904955-db548ff83672?fm=jpg&q=70&w=1200&auto=format&fit=crop') center/cover no-repeat;color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:flex-end}
+#login .pane h1{font-size:clamp(34px,4.4vw,58px);line-height:1.02;letter-spacing:-.045em;font-weight:800}
+#login .pane p{margin-top:16px;color:#eaf8ee;max-width:24em}
+#login form{background:#fff;padding:56px;display:flex;flex-direction:column;justify-content:center;max-width:460px;width:100%;margin:auto}
+#login form img{height:32px;align-self:flex-start;margin-bottom:32px}
+#login h2{font-size:24px;letter-spacing:-.03em;margin-bottom:20px}
+#login label{font-weight:600;font-size:14px;margin:12px 0 6px}
+#login form .b{margin-top:24px;padding:14px}
+#login small{margin-top:14px;color:var(--mut);font-size:13px}
+#app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+aside{background:#fff;border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
+aside img{height:28px;align-self:flex-start;margin:0 8px 26px;flex-shrink:0}
+aside button.nv{text-align:left;background:none;border:0;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--mut);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+aside button.nv:hover{background:var(--paper)}
+aside button.nv.on{background:var(--g);color:#fff}
+.badge{background:var(--red);color:#fff;border-radius:20px;font-size:12px;padding:0 8px;line-height:20px}
+aside .bt{margin-top:auto;display:grid;gap:6px;flex-shrink:0;padding-top:14px}
+aside .bt a{font-size:13px;color:var(--mut);padding:0 14px;text-decoration:none}
+main{padding:36px 40px 80px;max-width:900px;width:100%}
+main h1{font-size:28px;letter-spacing:-.035em;font-weight:800;margin-bottom:22px}
+.hero{border-radius:24px;padding:32px;background:var(--g);color:#fff;display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.hero.z{background:var(--gd)}
+.hero .num{font-size:clamp(48px,13vw,88px);font-weight:800;letter-spacing:-.05em;line-height:1;flex-shrink:0}
+.hero .t{flex:1;min-width:200px}
+.hero .t b{display:block;font-size:20px}
+.hero .t span{font-size:14px;color:#dff3e5}
+.hero .row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.hero .b{background:#fff;color:var(--ink)}
+.hero .b:hover{background:var(--lamp)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.box{background:#fff;border-radius:20px;padding:22px;border:1px solid var(--line)}
+.box h2{font-size:16px;margin-bottom:10px}
+.box p,.box li{font-size:14px;color:var(--mut)}
+.box ul{padding-left:18px}
+.sw{position:relative;width:52px;height:30px;border-radius:15px;border:0;background:#c3cec7;cursor:pointer;flex:none;transition:background .15s}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw[aria-checked=true]{background:var(--g)}
+.sw[aria-checked=true]:after{transform:translateX(22px)}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.sec{margin:26px 0 12px;font-size:18px;font-weight:600;display:flex;align-items:baseline;gap:10px}
+.sec small{color:var(--mut);font-size:13px;font-weight:400}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{position:relative;border:2px solid var(--line);background:#fff;border-radius:20px;aspect-ratio:1;width:100%;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px;transition:background .2s,border-color .2s,color .2s,transform .12s;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation}
+.tile.on{background:var(--g);border-color:var(--g);color:#fff}
+.tile:hover{border-color:var(--g)}
+.tile.held{transform:scale(.93)}
+.tile .ic{width:30px;height:30px;flex:none;color:inherit}
+.tile .ic svg{width:100%;height:100%;display:block}
+.tile b{font-size:12.5px;line-height:1.25;font-weight:600;text-align:center;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;max-height:2.6em}
+.tile .hrt{position:absolute;top:8px;right:8px;width:18px;height:18px;color:#e5322d}
+.tile .hrt svg{width:100%;height:100%;display:block;fill:#e5322d}
+.tile.on .hrt{color:#fff}
+.tile.on .hrt svg{fill:#fff}
+.tile .hold{position:absolute;inset:0;pointer-events:none}
+.tile .hold svg{width:100%;height:100%}
+.tile .hold circle{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-dasharray:126;stroke-dashoffset:126;opacity:0;transform:rotate(-90deg);transform-origin:center}
+.tile.held .hold circle{opacity:.85;transition:stroke-dashoffset .45s linear;stroke-dashoffset:0}
+.ov{position:fixed;inset:0;background:rgba(23,32,27,.45);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+.sheet{background:#fff;border-radius:24px;padding:22px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.sheet .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.sheet h2{font-size:20px;letter-spacing:-.03em}
+.sheet .hd small{display:block;color:var(--mut);font-size:13px}
+.sheet .x{border:0;background:var(--paper);width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;flex:none}
+.sheet .x:hover{background:var(--line)}
+.sheet .big{font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1;text-align:center;margin:6px 0 14px}
+.sheet input[type=range]{width:100%;margin:0;accent-color:var(--g);cursor:pointer;height:28px}
+.sheet .sc{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:2px}
+.sheet .b{width:100%;margin-top:18px;padding:12px}
+.seg{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:40px;padding:3px;margin-bottom:16px}
+.seg button{border:0;background:none;border-radius:40px;padding:7px 18px;font-weight:600;font-size:13px;color:var(--mut);cursor:pointer}
+.seg button.on{background:var(--g);color:#fff}
+.gr{display:grid;grid-template-columns:minmax(0,210px) minmax(0,1fr);gap:24px;align-items:center;margin-bottom:22px}
+.donut{width:100%;max-width:210px;height:auto;display:block;margin:0 auto}
+.donut text{font-family:inherit;text-anchor:middle}
+.lg{display:grid;gap:8px;font-size:13px}
+.lg div{display:flex;align-items:center;gap:8px;min-width:0}
+.lg i{width:12px;height:12px;border-radius:4px;flex:none}
+.lg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
+.lg b{white-space:nowrap}
+.sub{font-size:13px;font-weight:600;color:var(--mut);margin:0 0 10px}
+html{-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+img{max-width:100%}
+.two>*,.tiles>*,.gr>*{min-width:0}
+.thread{display:grid;gap:12px;max-width:560px}
+.m{padding:12px 16px;border-radius:18px;font-size:15px;max-width:90%}
+.m.bot{background:#fff;border:1px solid var(--line);border-top-left-radius:4px}
+.m.me{background:var(--g);color:#fff;justify-self:end;border-top-right-radius:4px}
+.m.sys{justify-self:center;background:none;color:var(--mut);font-size:13px;text-align:center}
+.m time{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+.m .q{display:flex;gap:8px;margin-top:10px}
+.set{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;margin-bottom:14px}
+.set h3{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.set h3 input{font-weight:600}
+.dr{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.dr>div{display:flex;flex-direction:column;gap:2px}
+.dr>div:first-child{flex:1;min-width:150px}
+.dr input[type=number]{width:78px}
+.dr select{border:2px solid var(--line);border-radius:12px;padding:8px 10px;font:inherit;background:#fff}
+.dr label{font-size:13px;color:var(--mut);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.dr input[type=checkbox]{width:18px;height:18px;accent-color:var(--g)}
+.dr small{display:block;font-size:11px;color:var(--mut)}
+.hbtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--mut);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s,background .15s}
+.hbtn svg{width:16px;height:16px;fill:none;transition:fill .15s}
+.hbtn:hover{border-color:#e5322d;color:#e5322d}
+.hbtn[aria-pressed=true]{border-color:#e5322d;color:#e5322d;background:#fff1f0}
+.hbtn[aria-pressed=true] svg{fill:#e5322d}
+.add{display:flex;gap:8px;margin-top:12px}
+.add input{flex:1;min-width:0}
+.add select{border:2px solid var(--line);border-radius:12px;padding:0 10px;font:inherit;background:#fff}
+.chart{display:grid;gap:10px;margin-bottom:20px}
+.cb-row{display:grid;grid-template-columns:110px 1fr 74px;gap:10px;align-items:center;font-size:13px}
+.cb-label{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-track{background:var(--paper);border:1px solid var(--line);border-radius:10px;height:16px;overflow:hidden}
+.cb-fill{background:var(--g);height:100%;border-radius:10px;transition:width .3s}
+.cb-val{text-align:right;font-weight:600;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;color:var(--mut);font-weight:600;padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl tfoot td{font-weight:700;border-top:2px solid var(--line);border-bottom:0}
+.priceIn{width:64px;border:2px solid var(--line);border-radius:10px;padding:4px 8px;font:inherit;background:#fff;margin-left:6px}
+.ibot-bar{position:sticky;top:0;background:var(--paper);z-index:3;padding:8px 0 14px}
+.ibotWrap{position:relative}
+.ibot-thread{max-height:calc(100vh - 230px);overflow-y:auto;padding-right:4px;padding-bottom:12px}
+@media(max-width:800px){.ibot-thread{max-height:calc(100vh - 300px)}}
+.scrollTop{position:fixed;right:24px;bottom:34px;width:46px;height:46px;border-radius:50%;background:var(--ink);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:4}
+.scrollTop.show{opacity:1;pointer-events:auto}
+.scrollTop:hover{background:var(--g)}
+@media(max-width:800px){.ov{align-items:flex-end;padding:0}.sheet{max-width:none;border-radius:24px 24px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom, 0px))}}
+@media(max-width:800px){.scrollTop{right:16px;bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
+@media(max-width:800px){
+#login{grid-template-columns:1fr}#login .pane{display:none}#login form{padding:32px 24px}
+#app{grid-template-columns:1fr}
+aside{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom, 0px));left:12px;right:12px;top:auto;height:auto;flex-direction:row;padding:6px;z-index:5;border-top:0;border:1px solid var(--line);border-radius:20px;box-shadow:0 6px 18px rgba(23,32,27,.12)}
+aside img,aside .bt{display:none}
+aside button.nv{flex:1;justify-content:center;padding:10px 4px;font-size:13px;gap:6px}
+main{padding:20px 14px calc(120px + env(safe-area-inset-bottom, 0px))}main h1{font-size:24px}.two{grid-template-columns:1fr}.gr{grid-template-columns:1fr}.hero{padding:22px;gap:16px}.box{padding:16px}.set{padding:14px}.set h3{flex-wrap:wrap}input[type=text],input[type=email],input[type=password],input[type=number],select{font-size:16px}.thread{max-width:100%}.ibot-bar{max-width:100%!important}.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{padding:14px;min-height:96px}.m{max-width:100%}.m .q{flex-wrap:wrap}.dr>div:first-child{min-width:100%}.dr input[type=number]{width:88px}.dr>div:first-child{min-width:100%}.cb-row{grid-template-columns:80px 1fr 62px}
+}
+html,body{max-width:100%}
+main,.box,.hero,.set{min-width:0}
+main{overflow-wrap:anywhere}
+@media(max-width:800px){
+#app{grid-template-columns:minmax(0,1fr)}
+main{width:100%;max-width:100%}
+.two,.gr{grid-template-columns:minmax(0,1fr)}
+.cb-row{grid-template-columns:minmax(70px,90px) minmax(0,1fr) auto}
+.ibot-thread{max-height:calc(100vh - 290px);max-height:calc(100dvh - 290px)}
+}
+
+.ibotWrap{display:flex;flex-direction:column;max-width:560px;height:calc(100vh - 120px);height:calc(100dvh - 120px)}
+.ibotWrap h1{margin-bottom:12px;flex-shrink:0}
+.chatBody{position:relative;flex:1;min-height:0;display:flex}
+.ibot-thread{max-height:none!important;flex:1;width:100%;overflow-y:auto;align-content:start;padding:0 4px 12px 0;overscroll-behavior:contain}
+.ibot-bar{position:static!important;flex-shrink:0;padding:10px 0 0!important;max-width:100%!important;background:transparent!important}
+.scrollTop{position:absolute!important;right:10px!important;bottom:10px!important}
+@media(max-width:800px){
+.ibotWrap{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100dvh);max-width:none;z-index:4;background:transparent;padding:14px 14px calc(84px + env(safe-area-inset-bottom,0px))}
+body.kb .ibotWrap{padding-bottom:10px}
+body.kb aside{display:none}
+}
+
+.priceLbl{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0}
+input.priceIn[type=number]{width:78px;margin:0;padding:6px 10px;border-radius:10px;font:inherit;color:var(--ink);text-align:right}
+.thread{gap:10px}
+.m{font-size:15px;line-height:1.55;max-width:86%;padding:12px 16px;border-radius:20px}
+.m.bot{border:0;border-top-left-radius:6px;box-shadow:0 1px 2px rgba(23,32,27,.06),0 8px 22px rgba(23,32,27,.06)}
+.m.me{background:linear-gradient(135deg,#21b055,#14873d);border-top-right-radius:6px;box-shadow:0 6px 16px rgba(24,153,71,.28)}
+.m time{font-size:10.5px;opacity:.75;margin-top:5px}
+.m.me time{color:rgba(255,255,255,.8)}
+.pop{animation:pop .34s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.m.typing{display:flex;gap:6px;align-items:center;justify-self:start;width:fit-content;padding:15px 18px}
+.typing span{width:8px;height:8px;border-radius:50%;background:var(--g);animation:wave 1.1s ease-in-out infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes wave{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-7px);opacity:1}}
+@media(prefers-reduced-motion:reduce){.pop,.typing span{animation:none}}
+
+.deco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.deco svg{width:100%;height:100%;display:block}
+.deco .d1{animation:drift 22s ease-in-out infinite alternate}
+.deco .d2{animation:drift 28s ease-in-out infinite alternate-reverse}
+.deco .d3{animation:drift 34s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(16px,-22px)}}
+#app,#login{position:relative;z-index:1}
+.mw{display:contents}
+.deco .stars{display:none}
+:root[data-theme="dark"] .deco .stars{display:block;animation:twinkle 3.4s ease-in-out infinite}
+:root[data-theme="dark"] .deco g:not(.stars){opacity:.55}
+@keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.deco g{animation:none}.deco .stars{animation:none;opacity:.6}}
+</style>
+</head>
+<body>
+<div class="deco" aria-hidden="true"><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs><pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2.6" fill="var(--g)"/></pattern></defs>
+<g class="d1"><circle cx="1090" cy="110" r="200" fill="var(--g)" opacity=".11"/><circle cx="1090" cy="110" r="120" fill="none" stroke="var(--g)" stroke-width="3" opacity=".18"/></g>
+<g class="d2"><circle cx="110" cy="700" r="150" fill="none" stroke="var(--g)" stroke-width="28" opacity=".10"/></g>
+<g class="d3"><polygon points="930,830 1110,520 1290,830" fill="var(--gd)" opacity=".08"/></g>
+<g class="d2"><rect x="520" y="30" width="150" height="150" rx="30" fill="var(--g)" opacity=".09" transform="rotate(25 595 105)"/></g>
+<g class="d1"><rect x="60" y="120" width="260" height="22" rx="11" fill="var(--g)" opacity=".12" transform="rotate(-35 190 131)"/><rect x="110" y="170" width="200" height="22" rx="11" fill="var(--gd)" opacity=".09" transform="rotate(-35 210 181)"/></g>
+<rect x="640" y="600" width="260" height="170" fill="url(#dots)" opacity=".22"/>
+<g class="d3"><polygon points="300,420 360,520 240,520" fill="none" stroke="var(--g)" stroke-width="4" opacity=".2"/><rect x="880" y="330" width="46" height="46" rx="8" fill="none" stroke="var(--g)" stroke-width="4" opacity=".2" transform="rotate(18 903 353)"/><circle cx="470" cy="330" r="14" fill="var(--g)" opacity=".18"/><circle cx="780" cy="190" r="9" fill="var(--gd)" opacity=".16"/></g>
+<g class="stars" aria-hidden="true"><circle cx="150" cy="90" r="1.6" fill="#fff"/><circle cx="300" cy="200" r="1.2" fill="#fff"/><circle cx="520" cy="60" r="1.8" fill="#fff"/><circle cx="700" cy="260" r="1.3" fill="#fff"/><circle cx="860" cy="130" r="1.6" fill="#fff"/><circle cx="980" cy="340" r="1.2" fill="#fff"/><circle cx="1050" cy="80" r="1.8" fill="#fff"/><circle cx="200" cy="450" r="1.3" fill="#fff"/><circle cx="430" cy="520" r="1.6" fill="#fff"/><circle cx="640" cy="600" r="1.2" fill="#fff"/><circle cx="950" cy="600" r="1.6" fill="#fff"/><circle cx="90" cy="650" r="1.3" fill="#fff"/></g>
+</svg></div>
+<div id="login">
+<div class="pane"><h1>Casa ta știe când ai plecat.</h1><p>Intră în cont ca să controlezi luminile, prizele și răspunsurile lui ibot.</p></div>
+<form id="lf">
+<img src="logo.png" alt="ihouse">
+<h2>Intră în contul casei</h2>
+<label for="em">Email</label><input id="em" type="email" required autocomplete="username" placeholder="nume@exemplu.ro">
+<label for="pw">Parolă</label><input id="pw" type="password" required autocomplete="current-password">
+<button class="b" type="submit">Intră în cont</button>
+<small id="lerr" style="color:var(--red)"></small>
+</form>
+</div>
+
+<div id="app" class="hide">
+<aside>
+<img src="logo.png" alt="ihouse">
+<button class="nv" data-v="home">Acasă</button>
+<button class="nv" data-v="rooms">Camere</button>
+<button class="nv" data-v="ibot">ibot <span class="badge hide" id="bd"></span></button>
+<button class="nv" data-v="set">Setări</button>
+<button class="nv" id="theme" data-a="theme" aria-pressed="false" aria-label="Comută modul noapte">Noapte</button>
+<div class="bt"><a href="index.html">Pagina de prezentare</a><button class="b o s" id="out">Ieși din cont</button></div>
+</aside>
+<main id="view"></main>
+</div>
+
+<div id="sy" class="hide" style="position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:#c4302b;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:30"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem('ihouse-theme',t)}catch(e){}
+  var tb=document.getElementById('theme');
+  if(tb){tb.textContent=t==='dark'?'Zi':'Noapte';tb.setAttribute('aria-pressed',t==='dark')}
+}
+(function(){var saved='light';try{saved=localStorage.getItem('ihouse-theme')||'light'}catch(e){}applyTheme(saved)})();
+var SB=supabase.createClient('https://xqkrzcwatwjkgzylzhfu.supabase.co','sb_publishable_PkRAGJmaZgxb_skTsRCoKA_BCK8oHWL');
+var SCALE=1,BIG=1e9,uid=BIG,view='home',userSentFlag=false,dimId=null,focusDim=false;
+var S={count:0,off:false,price:0.95,chat:[],rooms:[],types:[],sched:[]},snap={},sSnap='',busy=false,dirty=false,timer=null,ready=false,rt=null,rtT=null;
+var ms=function(t){return t?Date.parse(t):null},iso=function(n){return n?new Date(n).toISOString():null};
+function note(t){var n=$('#sy');n.textContent=t||'';n.classList.toggle('hide',!t)}
+function tyOf(d){return S.types.filter(function(t){return t.code===d.type})[0]||{}}
+function isDim(d){return !!tyOf(d).dimmable}
+function tn(d){return tyOf(d).name||d.type}
+function chOpts(d){var o='<option value="0">—</option>';for(var i=1;i<=6;i++)o+='<option value="'+i+'"'+(d.channel===i?' selected':'')+'>Port '+i+'</option>';return o}
+function typeOpts(){return S.types.map(function(t){return '<option value="'+esc(t.code)+'">'+esc(t.name)+'</option>'}).join('')}
+function tRow(t){return {code:t.code,name:t.name,dimmable:!!t.dimmable,default_watt:t.default_watt||0,default_hours:t.default_hours||0}}
+function rRow(r,i){return {name:r.name,position:i}}
+function dRow(d,r){var t=tyOf(d);return {room_id:r.id,channel:d.channel||null,type_id:t.id||null,name:d.name,state:d.on?1:0,level:d.level!=null?d.level:1,watt:d.watt||0,hours_per_day:d.hours||0,check_minutes:d.check||0,essential:!!d.essential,protected:!!d.heart,on_since:iso(d.since),asked:!!d.asked,protected_asked:!!d.heartAsked,protected_until:iso(d.heartUntil)}}
+function mRow(m){return {role:m.sys?'sys':m.me?'me':'bot',kind:m.sys||m.me?null:m.heart?'protected':m.free?'free':'check',device_id:m.dev&&find(m.dev)?m.dev:null,body:m.text,done:m.done||null}}
+function sRow(){return {people_count:S.count,off_mode:!!S.off,price_per_kwh:S.price}}
+function scRow(x){return {device_id:x.dev,run_at:iso(x.at),action:x.on?1:0}}
+function addSched(d,on,min){S.sched.push({id:++uid,dev:d.id,at:Date.now()+min*60000,on:on})}
+function mark(){snap={};S.sched.forEach(function(x){snap['s'+x.id]=JSON.stringify(scRow(x))});S.types.forEach(function(t){snap['t'+t.id]=JSON.stringify(tRow(t))});S.rooms.forEach(function(r,i){snap['r'+r.id]=JSON.stringify(rRow(r,i));r.devices.forEach(function(d){snap['d'+d.id]=JSON.stringify(dRow(d,r))})});S.chat.forEach(function(m){snap['m'+m.id]=JSON.stringify(mRow(m))});sSnap=JSON.stringify(sRow())}
+async function load(){
+  var q=await Promise.all([SB.from('device_types').select('*').order('id'),SB.from('rooms').select('*').order('position').order('id'),SB.from('devices').select('*').order('id'),SB.from('settings').select('*').eq('id',1).maybeSingle(),SB.from('ibot_messages').select('*').order('id')]);
+  for(var i=0;i<q.length;i++)if(q[i].error)throw q[i].error;
+  if(!q[3].data)throw new Error('Acest cont nu are acces la casă (nu este proprietar).');
+  S.types=q[0].data;var tc={};S.types.forEach(function(t){tc[t.id]=t.code});
+  S.rooms=q[1].data.map(function(r){return {id:r.id,name:r.name,devices:[]}});
+  var rm={};S.rooms.forEach(function(r){rm[r.id]=r});
+  q[2].data.forEach(function(d){var r=rm[d.room_id];if(r)r.devices.push({id:d.id,channel:d.channel||null,name:d.name,type:tc[d.type_id],on:d.state===1,level:+d.level,watt:d.watt,hours:+d.hours_per_day,check:d.check_minutes,essential:d.essential,heart:d.protected,since:ms(d.on_since)||(d.state===1?Date.now():null),asked:d.asked,heartAsked:d.protected_asked,heartUntil:ms(d.protected_until)})});
+  var st=q[3].data;S.count=st.people_count;S.off=st.off_mode;S.price=+st.price_per_kwh;
+  S.chat=q[4].data.map(function(m){return {id:m.id,dev:m.device_id||0,text:m.body,done:m.done,time:new Date(m.created_at).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'}),sys:m.role==='sys',me:m.role==='me',free:m.kind==='free',heart:m.kind==='protected'}});
+  var sq=await SB.from('schedules').select('*').order('run_at');
+  S.sched=sq.error?[]:sq.data.map(function(x){return {id:x.id,dev:x.device_id,at:ms(x.run_at),on:x.action===1}});
+  uid=BIG;mark();
+}
+async function push(){
+  timer=null;if(!ready)return;
+  if(busy){dirty=true;return}
+  busy=true;var remap=false;
+  try{
+    var seen={},idm={};
+    var up=async function(tab,key,o,row){
+      var j=JSON.stringify(row);
+      if(o.id>=BIG){var old=o.id,x=await SB.from(tab).insert(row).select('id').single();if(x.error)throw x.error;o.id=x.data.id;idm[old]=o.id;remap=true}
+      else if(snap[key+o.id]!==j){var y=await SB.from(tab).update(row).eq('id',o.id);if(y.error)throw y.error}
+      snap[key+o.id]=j;seen[key+o.id]=1;
+    };
+    for(var a=0;a<S.types.length;a++)await up('device_types','t',S.types[a],tRow(S.types[a]));
+    for(var i=0;i<S.rooms.length;i++){var r=S.rooms[i];await up('rooms','r',r,rRow(r,i));for(var k=0;k<r.devices.length;k++)await up('devices','d',r.devices[k],dRow(r.devices[k],r))}
+    S.chat.forEach(function(m){if(idm[m.dev])m.dev=idm[m.dev]});
+    for(var c=0;c<S.chat.length;c++)await up('ibot_messages','m',S.chat[c],mRow(S.chat[c]));
+    S.sched.forEach(function(x){if(idm[x.dev])x.dev=idm[x.dev]});
+    try{for(var q2=0;q2<S.sched.length;q2++)await up('schedules','s',S.sched[q2],scRow(S.sched[q2]))}catch(x2){console.warn('schedules:',x2.message||x2);S.sched.forEach(function(x){seen['s'+x.id]=1})}
+    var tabs={t:'device_types',r:'rooms',d:'devices',m:'ibot_messages',s:'schedules'};
+    for(var key in snap){if(!seen[key]){var z=await SB.from(tabs[key[0]]).delete().eq('id',key.slice(1));if(z.error)throw z.error;delete snap[key]}}
+    var sj=JSON.stringify(sRow());
+    if(sj!==sSnap){var u=await SB.from('settings').update(sRow()).eq('id',1);if(u.error)throw u.error;sSnap=sj}
+    note('');
+  }catch(x){note('Nu s-a salvat: '+(x.message||x))}
+  busy=false;
+  if(dirty){dirty=false;save()}
+  if(remap)render();
+}
+function save(){if(!ready)return;clearTimeout(timer);timer=setTimeout(push,250)}
+var pollT=null,resubT=null;
+function refreshNow(){
+  if(!ready||busy||timer||dirty)return;var a=document.activeElement;if(a&&a.tagName==='INPUT')return Promise.resolve();
+  return load().then(function(){if(S.count===0&&!S.off)offOn();render()}).catch(function(){});
+}
+function startPoll(){clearInterval(pollT);pollT=setInterval(refreshNow,15000)}
+function subscribe(){
+  if(rt)SB.removeChannel(rt);
+  var ev=function(){clearTimeout(rtT);rtT=setTimeout(refreshNow,500)};
+  rt=SB.channel('ihouse').on('postgres_changes',{event:'*',schema:'public',table:'devices'},ev).on('postgres_changes',{event:'*',schema:'public',table:'settings'},ev).on('postgres_changes',{event:'*',schema:'public',table:'ibot_messages'},ev).subscribe(function(status){
+    if(status==='CLOSED'||status==='CHANNEL_ERROR'||status==='TIMED_OUT'){clearTimeout(resubT);resubT=setTimeout(function(){if(ready)subscribe()},3000)}
+  });
+  startPoll();
+}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&ready)refreshNow()});
+function tm(){return new Date().toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})}
+function sys(t){S.chat.push({id:++uid,dev:0,text:t,time:tm(),sys:true})}
+function find(id){var f=null;S.rooms.forEach(function(r){r.devices.forEach(function(d){if(d.id==id)f=d})});return f}
+function setDev(d,on){d.on=on;if(on&&isDim(d)&&!(d.level>0))d.level=1;d.since=on?Date.now():null;d.asked=false;d.heartUntil=null;if(!on)d.heartAsked=false}
+function offOn(){
+  S.off=true;
+  var asked=false;
+  S.rooms.forEach(function(r){r.devices.forEach(function(d){
+    if(!d.on||d.essential)return;
+    if(d.heart){
+      if(!d.heartAsked){
+        d.heartAsked=true;asked=true;
+        S.chat.push({id:++uid,heart:true,dev:d.id,text:'🧺 '+d.name+' încă funcționează. Ai lăsat-o tu pornită sau a pornit singură? Dacă da, ce program (câte minute) ai pus? Îi opresc priza automat când se termină.',time:tm()});
+      }
+      return;
+    }
+    setDev(d,false);
+  })});
+  sys('Modul OFF activat: luminile și prizele neesențiale s-au oprit.'+(asked?' Echipamentele protejate rămân pornite până răspunzi lui ibot.':''));
+}
+function setCount(n){S.count=Math.max(0,n);if(S.count===0&&!S.off)offOn();else if(S.count>0&&S.off){S.off=false;S.rooms.forEach(function(r){r.devices.forEach(function(d){d.heartAsked=false})});sys('Cineva a intrat: Modul OFF s-a dezactivat.')}}
+var HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
+var BULB='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
+var PLUG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0V7z"/><path d="M12 16v3a2 2 0 0 0 2 2h2"/></svg>';
+function devIcon(d){return isDim(d)?BULB:PLUG}
+function dimSheet(d){
+  var rn='';S.rooms.forEach(function(r){if(r.devices.indexOf(d)>-1)rn=r.name});
+  var v=d.on?(d.level!=null?d.level:1):0;
+  return '<div class="ov" data-a="dimx"><div class="sheet" data-a="none" role="dialog" aria-modal="true" aria-labelledby="dimT"><div class="hd"><div><h2 id="dimT">Intensitate</h2><small>'+esc(d.name)+' · '+esc(rn)+'</small></div><button class="x" data-a="dimx" aria-label="Închide">×</button></div><div class="big" id="lo'+d.id+'">'+n2(v)+'</div><input type="range" id="dimIn" min="0" max="1" step="0.05" value="'+v+'" data-k="lv" data-d="'+d.id+'" aria-label="Intensitate '+esc(d.name)+'"><div class="sc"><span>0 · stins</span><span>1 · maxim</span></div><button class="b" data-a="dimx">Gata</button></div></div>';
+}
+function n2(x){return (Math.round((x||0)*100)/100).toFixed(2)}
+function kwh(d){return (d.watt||0)*(d.hours!=null?d.hours:0)/1000}
+function cost(d){return kwh(d)*(S.price||0)}
+function roomKwh(r){var t=0;r.devices.forEach(function(d){t+=kwh(d)});return t}
+function totalKwh(){var t=0;S.rooms.forEach(function(r){t+=roomKwh(r)});return t}
+function totalCost(){return totalKwh()*(S.price||0)}
+function pending(){return S.chat.filter(function(m){return !m.sys&&!m.done}).length}
+function onList(){var a=[];S.rooms.forEach(function(r){r.devices.forEach(function(d){if(d.on)a.push(d.name+' ('+r.name+')')})});return a}
+function ibotReply(t){
+  var low=t.toLowerCase();
+  var tmm=low.match(/peste\s+(\d+(?:[.,]\d+)?)\s*(?:de\s+)?(ore|ora|oră|h|min\w*)/);
+  if(tmm&&/stinge|opre[sș]te|aprinde|porne[sș]te/.test(low)){
+    var mins=parseFloat(tmm[1].replace(',','.'))*(/^(ore|ora|oră|h)$/.test(tmm[2])?60:1),son=/aprinde|porne[sș]te/.test(low),shit=[];
+    S.rooms.forEach(function(r){r.devices.forEach(function(d){if(low.indexOf(d.name.toLowerCase())>-1)shit.push(d)})});
+    if(!shit.length)S.rooms.forEach(function(r){if(low.indexOf(r.name.toLowerCase())>-1)r.devices.forEach(function(d){shit.push(d)})});
+    if(!shit.length)return 'Spune-mi ce echipament să programez, de exemplu „stinge lumina din bucătărie peste 20 de minute”.';
+    shit=shit.filter(function(d){return son||!d.essential});
+    if(!shit.length)return 'Echipamentele esențiale, precum frigiderul, nu se opresc.';
+    shit.forEach(function(d){addSched(d,son,mins)});
+    return 'Gata, voi '+(son?'porni ':'stinge ')+shit.map(function(d){return d.name.toLowerCase()}).join(', ')+' peste '+(mins>=120?n2(mins/60)+' ore':Math.round(mins)+' minute')+'.';
+  }
+  if(/economis|salv[ae]|reduce.*consum|factur/.test(low)){
+    var all=[];S.rooms.forEach(function(r){r.devices.forEach(function(d){if(kwh(d)>0&&!d.essential&&!d.heart)all.push({d:d,r:r,k:kwh(d)})})});
+    all.sort(function(a,b){return b.k-a.k});
+    if(!all.length)return 'Momentan niciun echipament nu are consum estimat. Adaugă puterea (W) și orele/zi din Setări ca să-ți pot da sfaturi precise.';
+    var top=all.slice(0,2).map(function(x){return x.d.name.toLowerCase()+' din '+x.r.name.toLowerCase()});
+    var msg='Cel mai mult consumă '+top.join(' și ')+' — '+n2(all[0].k)+' kWh/zi. ';
+    msg+=S.off?'Modul OFF e deja activ, ceea ce ajută mult.':'Activează Modul OFF când pleci de acasă, ca să reduci automat consumul neesențial.';
+    msg+=' Reducerea cu o oră/zi la '+all[0].d.name.toLowerCase()+' ar economisi aproximativ '+n2((all[0].d.watt||0)*(S.price||0)/1000)+' lei/zi.';
+    return msg;
+  }
+  var pm=low.match(/(\d+(?:[.,]\d+)?)\s*%/),kw=/intensit|luminozit|dimeaz|dimmer|reglea/.test(low),lvl=null;
+  if(pm)lvl=parseFloat(pm[1].replace(',','.'))/100;
+  else if(kw){
+    var dm=low.match(/(?:^|[^\d.,])(0[.,]\d+|1(?:[.,]0+)?|0)(?![\d])/);
+    if(dm)lvl=parseFloat(dm[1].replace(',','.'));
+    else if(/jum[aă]tate/.test(low))lvl=0.5;
+    else if(/maxim|complet/.test(low))lvl=1;
+    else if(/minim/.test(low))lvl=0.1;
+  }
+  if(lvl!=null||kw){
+    var named=[],inRoom=[];
+    S.rooms.forEach(function(r){r.devices.forEach(function(d){
+      if(low.indexOf(d.name.toLowerCase())>-1)named.push(d);
+      else if(low.indexOf(r.name.toLowerCase())>-1)inRoom.push(d);
+    })});
+    var pool=named.length?named:inRoom;
+    if(!pool.length)return 'Spune-mi ce bec sau ce cameră să reglez, de exemplu „setează becul din bucătărie la 50%”.';
+    var ls=pool.filter(function(d){return isDim(d)});
+    if(!ls.length)return 'Doar echipamentele reglabile au intensitate. '+pool[0].name+' îl pot doar porni sau opri.';
+    if(lvl==null)return 'La ce intensitate? Dă-mi o valoare între 0 și 1 sau un procent, de exemplu 50%.';
+    lvl=Math.round(Math.min(1,Math.max(0,lvl))*100)/100;
+    ls.forEach(function(d){d.level=lvl;if(lvl>0&&!d.on)setDev(d,true);else if(lvl===0&&d.on)setDev(d,false)});
+    var nm=ls.map(function(d){return d.name.toLowerCase()}).join(', ');
+    return lvl===0?'Am stins '+nm+' (intensitate 0).':'Am setat intensitatea la '+n2(lvl)+' pentru '+nm+'.';
+  }
+  var on=/aprinde|porneste|pornește/.test(low),off=/stinge|opreste|oprește/.test(low),hit=null;
+  if(on||off)S.rooms.forEach(function(r){r.devices.forEach(function(d){if(!hit&&(low.indexOf(d.name.toLowerCase())>-1||low.indexOf(r.name.toLowerCase())>-1))hit=d})});
+  if(hit){setDev(hit,on);return (on?'Am pornit ':'Am oprit ')+hit.name.toLowerCase()+'.'}
+  return 'Am notat mesajul tău. Îmi poți spune „aprinde” sau „stinge” urmat de numele unui echipament sau al unei camere, să reglez intensitatea unui bec (de exemplu „becul din bucătărie la 50%”), sau întreabă-mă cum să economisești curent.';
+}
+var rec=null;
+function startMic(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Browserul nu suportă recunoașterea vocală. Folosește Chrome, Edge sau Safari.');return}
+  if(rec){rec.stop();return}
+  rec=new SR();rec.lang='ro-RO';rec.interimResults=true;rec.continuous=false;
+  rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;var inp=$('#ibotIn');if(inp)inp.value=t};
+  rec.onerror=function(e){if(e.error==='not-allowed'||e.error==='service-not-allowed')alert('Permite accesul la microfon în browser și deschide pagina prin https.')};
+  rec.onend=function(){rec=null;var inp=$('#ibotIn'),t=inp?inp.value.trim():'';if(t){sendFree(t);inp.value='';userSentFlag=true}render()};
+  try{rec.start()}catch(x){rec=null}
+  render();
+}
+var aiWait=false,popMsg=null,typer=null;
+function typeOut(m){
+  var full=m.text,i=0,step=Math.max(1,Math.ceil(full.length/170));
+  (function tick(){
+    var el=document.querySelector('[data-typing] .tx');
+    if(typer!==m||!el){if(typer===m)typer=null;return}
+    i=Math.min(full.length,i+step);el.textContent=full.slice(0,i);
+    var t=thr();if(t)t.scrollTop=t.scrollHeight;
+    if(i<full.length)setTimeout(tick,18);else{typer=null;updBtn()}
+  })();
+}
+function aiContext(){return {programari:S.sched.map(function(x){return {device_id:x.dev,peste_minute:Math.max(0,Math.round((x.at-Date.now())/60000)),actiune:x.on?'pornește':'oprește'}}),persoane:S.count,mod_off:!!S.off,pret_kwh_lei:S.price,camere:S.rooms.map(function(r){return {camera:r.name,echipamente:r.devices.map(function(d){return {id:d.id,nume:d.name,tip:tn(d),reglabil:isDim(d),aprins:!!d.on,intensitate:d.level,watt:d.watt||0,ore_pe_zi:d.hours||0,kwh_pe_zi:kwh(d),esential:!!d.essential,protejat:!!d.heart,minute_aprins:d.on&&d.since?Math.round((Date.now()-d.since)/60000):0}})}})}}
+async function askAI(t){
+  var hist=S.chat.filter(function(m){return m.me||m.free}).slice(-9,-1).map(function(m){return {role:m.me?'user':'assistant',content:m.text}});
+  var r=await SB.functions.invoke('ibot',{body:{message:t,history:hist,context:aiContext()}});
+  if(r.error||!r.data||r.data.error||!r.data.reply){console.warn('ibot AI:',r.error||(r.data&&r.data.error));return null}
+  (r.data.actions||[]).forEach(function(a){
+    var d=find(+a.device_id);if(!d)return;
+    if(a.cancel){S.sched=S.sched.filter(function(x){return x.dev!=d.id});return}
+    var am=+a.after_minutes||0;
+    if(am>0&&typeof a.on==='boolean'){if(!(a.on===false&&d.essential))addSched(d,a.on,am);return}
+    if(a.on===false&&d.essential)return;
+    if(a.level!=null&&isDim(d)){d.level=Math.round(Math.min(1,Math.max(0,+a.level||0))*100)/100;if(d.level>0&&!d.on)setDev(d,true);else if(d.level===0&&d.on)setDev(d,false)}
+    else if(typeof a.on==='boolean')setDev(d,a.on);
+  });
+  return r.data.reply;
+}
+async function sendFree(t){
+  if(!t||!t.trim())return;t=t.trim();
+  var um={id:++uid,me:true,text:t,time:tm()};S.chat.push(um);popMsg=um;
+  aiWait=true;
+  var txt=null;
+  try{txt=await askAI(t)}catch(x){console.warn(x)}
+  if(txt==null)txt=ibotReply(t);
+  aiWait=false;
+  var bm={id:++uid,free:true,text:txt,time:tm()};
+  S.chat.push(bm);popMsg=bm;typer=bm;
+  userSentFlag=true;render();typeOut(bm);
+}
+
+function thr(){return document.querySelector('.ibot-thread')}
+function updBtn(){var t=thr(),b=$('#scrollTopBtn');if(!t||!b)return;b.classList.toggle('show',t.scrollHeight-t.scrollTop-t.clientHeight>40)}
+function toBottom(smooth){
+  var t=thr();if(!t)return;
+  t.scrollTo({top:t.scrollHeight,behavior:smooth?'smooth':'auto'});
+  if(!smooth){var l=t.lastElementChild;if(l&&l.scrollIntoView)l.scrollIntoView({block:'nearest'});t.scrollTop=t.scrollHeight;updBtn()}
+}
+function typesBox(){return '<div class="set"><h3>Tipuri de echipament</h3>'+S.types.map(function(t){return '<div class="dr"><div><input type="text" value="'+esc(t.name)+'" data-k="tn" data-t="'+t.id+'" aria-label="Nume tip"><small>'+esc(t.code)+'</small></div><div><input type="number" min="0" value="'+t.default_watt+'" data-k="tw" data-t="'+t.id+'" aria-label="Putere implicită"><small>W implicit</small></div><div><input type="number" min="0" step="0.1" value="'+t.default_hours+'" data-k="th" data-t="'+t.id+'" aria-label="Ore implicite"><small>ore/zi</small></div><label><input type="checkbox" data-k="td" data-t="'+t.id+'"'+(t.dimmable?' checked':'')+'>Reglabil</label><button class="b r s" data-a="dt" data-t="'+t.id+'">Șterge</button></div>'}).join('')+'<div class="add"><input type="text" id="ntn" placeholder="Tip nou (ex: Ventilator)" aria-label="Tip nou"><button class="b s" data-a="at">Adaugă tipul</button></div></div>'}
+var TYPING='<div class="mw"><div class="m bot typing" role="status" aria-label="ibot scrie"><span></span><span></span><span></span></div></div>';
+function msgHtml(m){
+  var r;
+  if(m.sys)r='<div class="m sys">'+esc(m.text)+' · '+m.time+'</div>';
+  else if(m.me)r='<div class="m me'+(m===popMsg?' pop':'')+'">'+esc(m.text)+'<time>'+m.time+'</time></div>';
+  else if(m.heart)r='<div class="m bot">'+esc(m.text)+'<time>'+m.time+'</time>'+(m.done?'':'<div class="q" style="flex-wrap:wrap"><input type="number" min="1" id="hmin'+m.id+'" placeholder="minute" style="width:84px" aria-label="Minute rămase din program"><button class="b s" data-a="hset" data-n="'+m.id+'">Setează timp</button><button class="b o s" data-a="hstop" data-n="'+m.id+'">Oprește acum</button></div>')+'</div>'+(m.done?'<div class="m me">'+esc(m.done)+'</div>':'');
+  else r='<div class="m bot'+(m===popMsg?' pop':'')+'"'+(m===typer?' data-typing="1"':'')+'><span class="tx">'+(m===typer?'':esc(m.text))+'</span><time>'+m.time+'</time>'+(m.done||m.free?'':'<div class="q"><button class="b s" data-a="nstop" data-n="'+m.id+'">Stinge</button><button class="b o s" data-a="nkeep" data-n="'+m.id+'">Las aprinsă</button></div>')+'</div>'+(m.done?'<div class="m me">'+esc(m.done)+'</div>':'');
+  return '<div class="mw">'+r+'</div>';
+}
+function chatItems(){
+  var a=S.chat.length?S.chat.map(msgHtml):['<div class="mw"><div class="m bot">Nu am întrebări acum. Te anunț când un echipament stă aprins mai mult decât timpul setat.</div></div>'];
+  if(aiWait)a.push(TYPING);
+  return a;
+}
+function syncThread(t){
+  var items=chatItems(),norm=function(x){return x.replace(' pop"','"')},prev=t._items||[],kids=t.children;
+  if(kids.length!==prev.length){t.innerHTML=items.join('');t._items=items.map(norm);return}
+  for(var i=0;i<items.length;i++){
+    if(i>=prev.length)t.insertAdjacentHTML('beforeend',items[i]);
+    else if(prev[i]!==norm(items[i])){var tmp=document.createElement('div');tmp.innerHTML=items[i];kids[i].replaceWith(tmp.firstElementChild)}
+  }
+  while(t.children.length>items.length)t.lastElementChild.remove();
+  t._items=items.map(norm);
+}
+function render(){
+  var ii=$('#ibotIn'),keepVal=ii?ii.value:null,keepFocus=ii&&document.activeElement===ii;
+  var keepScroll=(view==='set')?window.scrollY:null;
+  document.querySelectorAll('.nv').forEach(function(b){b.classList.toggle('on',b.dataset.v===view)});
+  var p=pending(),bd=$('#bd');bd.textContent=p;bd.classList.toggle('hide',!p);
+  var h='';
+  if(view==='home'){
+    var z=S.count===0,l=onList();
+    h='<h1>Acasă</h1><div class="hero'+(z?' z':'')+'"><div class="num">'+S.count+'</div><div class="t"><b>'+(z?'Persoane în casă: 0 – Mod OFF activat':'Persoane în casă: '+S.count)+'</b><span>Numărate de cele două lasere de la intrare.</span><div class="row"><button class="b s" data-a="in">Simulează intrare</button><button class="b s" data-a="exit">Simulează ieșire</button></div></div></div>'+
+    '<div class="two"><div class="box"><div class="ln"><div><h2>Modul OFF</h2><p>'+(S.off?'Activ: consumul neesențial e oprit.':'Oprit: casa funcționează normal.')+'</p></div><button class="sw" role="switch" aria-label="Modul OFF" aria-checked="'+S.off+'" data-a="off"></button></div></div>'+
+    '<div class="box"><h2>Aprinse acum: '+l.length+'</h2>'+(l.length?'<ul>'+l.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<p>Nimic nu consumă în acest moment.</p>')+'</div></div>';
+    var maxRoom=Math.max.apply(null,S.rooms.map(roomKwh).concat([0.0001]));
+    var chartBars=S.rooms.map(function(r){
+      var v=roomKwh(r),pct=Math.max(2,Math.round(v/maxRoom*100));
+      return '<div class="cb-row"><span class="cb-label">'+esc(r.name)+'</span><div class="cb-track"><div class="cb-fill" style="width:'+pct+'%"></div></div><span class="cb-val">'+n2(v)+' kWh</span></div>';
+    }).join('');
+    var tableRows=[];
+    S.rooms.forEach(function(r){r.devices.forEach(function(d){
+      tableRows.push('<tr><td>'+esc(d.name)+'</td><td>'+esc(r.name)+'</td><td>'+(d.watt||0)+' W</td><td>'+(d.hours!=null?d.hours:0)+' h</td><td>'+n2(kwh(d))+'</td><td>'+n2(cost(d))+' lei</td></tr>');
+    })});
+    var cv=S.cview==='tab'?'tab':'graf',tk=totalKwh();
+    var pal=['#189947','#0c5a29','#e2bd3a','#5aa9e6','#c4302b','#8e6bbf','#f08a4b','#3bb6a3'],acc=0,segs='',leg='';
+    S.rooms.forEach(function(r,i){
+      var v=roomKwh(r);if(v<=0||tk<=0)return;
+      var pc=v/tk*100,col=pal[i%pal.length];
+      segs+='<circle r="15.9155" cx="21" cy="21" fill="none" stroke="'+col+'" stroke-width="7" stroke-dasharray="'+pc.toFixed(3)+' '+(100-pc).toFixed(3)+'" stroke-dashoffset="'+(25-acc).toFixed(3)+'"></circle>';
+      acc+=pc;
+      leg+='<div><i style="background:'+col+'"></i><span>'+esc(r.name)+'</span><b>'+n2(v)+' kWh · '+Math.round(pc)+'%</b></div>';
+    });
+    var devs=[];S.rooms.forEach(function(r){r.devices.forEach(function(d){if(kwh(d)>0)devs.push(d)})});
+    devs.sort(function(a,b){return kwh(b)-kwh(a)});
+    var maxD=devs.length?kwh(devs[0]):1;
+    var devBars=devs.map(function(d){return '<div class="cb-row"><span class="cb-label">'+esc(d.name)+'</span><div class="cb-track"><div class="cb-fill" style="width:'+Math.max(2,Math.round(kwh(d)/maxD*100))+'%"></div></div><span class="cb-val">'+n2(kwh(d))+' kWh</span></div>'}).join('');
+    var grHtml=tk>0?'<p class="sub">Pe camere</p><div class="gr"><svg class="donut" viewBox="0 0 42 42" role="img" aria-label="Consum pe camere"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="var(--line)" stroke-width="7"></circle>'+segs+'<text x="21" y="21.5" font-size="5.2" font-weight="800" fill="var(--ink)">'+n2(tk)+'</text><text x="21" y="26.5" font-size="2.8" fill="var(--mut)">kWh/zi</text></svg><div class="lg">'+leg+'</div></div><p class="sub">Pe echipament</p><div class="chart">'+devBars+'</div><p style="font-size:13px;color:var(--mut);margin-bottom:6px">Total: <b style="color:var(--ink)">'+n2(tk)+' kWh</b> · <b style="color:var(--ink)">'+n2(totalCost())+' lei</b> pe zi</p>':'<p style="color:var(--mut)">Adaugă camere și echipamente cu putere și ore/zi ca să vezi graficul de consum.</p>';
+    var tblHtml='<div class="tblwrap"><table class="tbl"><thead><tr><th>Echipament</th><th>Cameră</th><th>Putere</th><th>Ore/zi</th><th>kWh/zi</th><th>Cost/zi</th></tr></thead><tbody>'+(tableRows.join('')||'<tr><td colspan="6" style="color:var(--mut)">Niciun echipament.</td></tr>')+'</tbody><tfoot><tr><td colspan="4">Total</td><td>'+n2(totalKwh())+' kWh</td><td>'+n2(totalCost())+' lei</td></tr></tfoot></table></div>';
+    var tgl='<div class="seg" role="group" aria-label="Mod afișare"><button class="'+(cv==='graf'?'on':'')+'" data-a="cv" data-c="graf" aria-pressed="'+(cv==='graf')+'">Grafic</button><button class="'+(cv==='tab'?'on':'')+'" data-a="cv" data-c="tab" aria-pressed="'+(cv==='tab')+'">Tabel</button></div>';
+    h+='<div class="box" style="margin-top:16px"><div class="ln" style="margin-bottom:14px;flex-wrap:wrap;gap:10px"><h2 style="margin:0">Consum de electricitate estimat</h2><label class="priceLbl">Preț/kWh<input type="number" min="0" step="0.01" id="price" value="'+(S.price||0)+'" class="priceIn" aria-label="Preț per kWh"><span>lei</span></label></div>'+
+    tgl+(cv==='tab'?tblHtml:grHtml)+
+    '<button class="b" data-a="askibot" style="margin-top:16px">Întreabă ibot cum să economisești</button></div>';
+  }else if(view==='rooms'){
+    h='<h1>Camere</h1>'+S.rooms.map(function(r){
+      var hasDim=r.devices.some(isDim);
+      return '<div class="sec">'+esc(r.name)+'<small>Apasă ca să pornești sau să oprești'+(hasDim?' · ține apăsat pentru intensitate':'')+'</small></div><div class="tiles">'+(r.devices.length?r.devices.map(function(d){
+        return '<button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+(isDim(d)?'. Ține apăsat pentru intensitate.':'')+'">'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează" role="img" aria-label="Protejat">'+HEART+'</span>':'')+(isDim(d)?'<span class="hold" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="20"/></svg></span>':'')+'<span class="ic">'+devIcon(d)+'</span><b>'+esc(d.name)+'</b></button>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
+  }else if(view==='ibot'){
+    h='<div class="ibotWrap"><h1>ibot</h1><div class="chatBody">'+
+    '<div class="thread ibot-thread">'+chatItems().join('')+'</div>'+
+    '<button class="scrollTop" id="scrollTopBtn" data-a="totop" aria-label="Mergi la ultimul mesaj" title="Mergi la ultimul mesaj">↓</button></div>'+
+    '<div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="mic" aria-label="Vorbește cu ibot">'+(rec?'Ascult…':'Vorbește')+'</button><button class="b s" data-a="send">Trimite</button></div></div>';
+  }else{
+    h='<h1>Setări</h1>'+S.rooms.map(function(r){
+      return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
+      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><div><select data-k="ch" data-d="'+d.id+'" aria-label="Port ESP32">'+chOpts(d)+'</select><small>Port ESP32</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
+      '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip">'+typeOpts()+'</select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
+      '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div>'+typesBox()+'<p style="font-size:13px;color:var(--mut)">Check 0 înseamnă că ibot nu întreabă.</p>';
+  }
+  if(view==='rooms'&&dimId){var dd=find(dimId);if(dd&&isDim(dd))h+=dimSheet(dd);else dimId=null}
+  var vw=$('#view');
+  if(view==='ibot'&&vw.dataset.v==='ibot'&&thr()){syncThread(thr());var mb=document.querySelector('[data-a="mic"]');if(mb)mb.textContent=rec?'Ascult…':'Vorbește'}
+  else{vw.innerHTML=h;vw.dataset.v=view;if(thr())thr()._items=chatItems().map(function(x){return x.replace(' pop"','"')})}
+  if(keepScroll!=null)window.scrollTo(0,keepScroll);
+  popMsg=null;save();
+  if(focusDim){var fi=$('#dimIn');if(fi)fi.focus();focusDim=false}
+  if(view==='ibot'){
+    var nin=$('#ibotIn');
+    if(nin&&ii&&keepVal!=null){nin.value=keepVal;if(keepFocus)nin.focus({preventScroll:true})}
+    if(userSentFlag)toBottom(false);
+    updBtn();
+  }
+  userSentFlag=false;
+}
+
+var holdTimer=null,holdFired=false,heldEl=null;
+function clearHold(){if(holdTimer){clearTimeout(holdTimer);holdTimer=null}if(heldEl){heldEl.classList.remove('held');heldEl=null}}
+document.addEventListener('pointerdown',function(e){
+  var t=e.target.closest('.tile[data-a="tg"]');if(!t)return;
+  var dv=find(t.dataset.d);if(!dv||!isDim(dv))return;
+  heldEl=t;t.classList.add('held');
+  holdTimer=setTimeout(function(){holdFired=true;clearHold();dimId=dv.id;focusDim=true;render()},450);
+});
+document.addEventListener('pointerup',clearHold);
+document.addEventListener('pointercancel',clearHold);
+document.addEventListener('click',function(e){
+  if(holdFired){holdFired=false;return}
+  var b=e.target.closest('[data-a],[data-v]');if(!b)return;
+  if(b.dataset.a==='none')return;
+  if(b.dataset.v){dimId=null;view=b.dataset.v;if(view==='ibot')userSentFlag=true;render();return}
+  var a=b.dataset.a,d=b.dataset.d?find(b.dataset.d):null,r=S.rooms.filter(function(x){return x.id==b.dataset.r})[0],m=S.chat.filter(function(x){return x.id==b.dataset.n})[0];
+  if(a==='in')setCount(S.count+1);
+  else if(a==='exit')setCount(S.count-1);
+  else if(a==='off'){if(S.off){S.off=false;S.rooms.forEach(function(rr){rr.devices.forEach(function(dd){dd.heartAsked=false})});sys('Modul OFF dezactivat manual.')}else offOn()}
+  else if(a==='cv')S.cview=b.dataset.c==='tab'?'tab':'graf';
+  else if(a==='dim'){dimId=d.id;focusDim=true}
+  else if(a==='dimx'){if(e.target.closest('.sheet')&&!e.target.closest('button')){return}dimId=null}
+  else if(a==='tg')setDev(d,!d.on);
+  else if(a==='ht'){d.heart=!d.heart;if(!d.heart){d.heartAsked=false;d.heartUntil=null}}
+  else if(a==='nstop'&&m){setDev(find(m.dev),false);m.done='Stinge';userSentFlag=true}
+  else if(a==='nkeep'&&m){var x=find(m.dev);x.since=Date.now();x.asked=false;m.done='Las aprinsă';userSentFlag=true}
+  else if(a==='hset'&&m){var inp=document.getElementById('hmin'+m.id);var mins=inp?Math.max(1,Math.round(+inp.value||0)):0;if(!mins){if(inp)inp.focus();return}var dv=find(m.dev);dv.heartUntil=Date.now()+mins*60000;m.done='Program setat: '+mins+' min';userSentFlag=true}
+  else if(a==='hstop'&&m){setDev(find(m.dev),false);m.done='Oprire imediată';userSentFlag=true}
+  else if(a==='dr'){if(confirm('Ștergi camera „'+r.name+'” și tot ce conține?'))S.rooms=S.rooms.filter(function(y){return y!==r})}
+  else if(a==='dd')S.rooms.forEach(function(y){y.devices=y.devices.filter(function(z){return z!==d})});
+  else if(a==='ad'){var i=b.parentNode.querySelector('input');if(!i.value.trim()){i.focus();return}var tc=b.parentNode.querySelector('select').value,tt=S.types.filter(function(x){return x.code===tc})[0]||{};r.devices.push({id:++uid,name:i.value.trim(),type:tc,on:false,check:0,level:1,watt:tt.default_watt||0,hours:tt.default_hours||0})}
+  else if(a==='ar'){var n=$('#nr');if(!n.value.trim()){n.focus();return}S.rooms.push({id:++uid,name:n.value.trim(),devices:[]})}
+  else if(a==='at'){var ni=$('#ntn'),nm=ni.value.trim();if(!nm){ni.focus();return}var cd=nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'tip';if(S.types.some(function(x){return x.code===cd})){alert('Există deja un tip cu acest nume.');return}S.types.push({id:++uid,code:cd,name:nm,dimmable:false,default_watt:50,default_hours:2})}
+  else if(a==='dt'){var tt2=S.types.filter(function(x){return x.id==b.dataset.t})[0];if(tt2&&S.rooms.some(function(rr){return rr.devices.some(function(dd){return dd.type===tt2.code})}))alert('Tipul este folosit de unele echipamente.');else S.types=S.types.filter(function(y){return y!==tt2})}
+  else if(a==='mic'){startMic()}
+  else if(a==='send'){var i=$('#ibotIn');sendFree(i.value);i.value='';userSentFlag=true}
+  else if(a==='askibot'){view='ibot';sendFree('Cum pot să economisesc curent electric?');userSentFlag=true}
+  else if(a==='theme'){var cur=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';applyTheme(cur);return}
+  else if(a==='totop'){toBottom(true);return}
+  render();
+});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.id==='price'){S.price=Math.max(0,+t.value||0);render();return}
+  var k=t.dataset.k;if(!k)return;
+  if(t.dataset.t){var tt=S.types.filter(function(x){return x.id==t.dataset.t})[0];if(tt){if(k==='tn'&&t.value.trim())tt.name=t.value.trim();if(k==='td')tt.dimmable=t.checked;if(k==='tw')tt.default_watt=Math.max(0,+t.value||0);if(k==='th')tt.default_hours=Math.max(0,+t.value||0)}save();render();return}
+  if(k==='rn'){var r=S.rooms.filter(function(x){return x.id==t.dataset.r})[0];if(t.value.trim())r.name=t.value.trim()}
+  else{var d=find(t.dataset.d);
+    if(k==='dn'&&t.value.trim())d.name=t.value.trim();
+    if(k==='wt')d.watt=Math.max(0,+t.value||0);
+    if(k==='hr')d.hours=Math.max(0,+t.value||0);
+    if(k==='ck'){d.check=Math.max(0,Math.round(+t.value||0));d.asked=false;if(d.on)d.since=Date.now()}
+    if(k==='es')d.essential=t.checked;
+    if(k==='ch'){var v=+t.value||null;if(v)S.rooms.forEach(function(rr){rr.devices.forEach(function(x){if(x!==d&&x.channel===v)x.channel=null})});d.channel=v;save();render();return}}
+  save();
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(!t.dataset||t.dataset.k!=='lv')return;
+  var d=find(t.dataset.d);if(!d)return;
+  var v=Math.min(1,Math.max(0,+t.value||0));
+  d.level=v;
+  if(v>0&&!d.on)setDev(d,true);else if(v===0&&d.on)setDev(d,false);
+  var o=document.getElementById('lo'+d.id);if(o)o.textContent=n2(v);
+  var tile=document.querySelector('.tile[data-d="'+d.id+'"]');
+  if(tile){tile.classList.toggle('on',d.on);tile.setAttribute('aria-pressed',d.on)}
+  save();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&dimId){dimId=null;render();return}
+  if(e.target&&e.target.id==='ibotIn'&&e.key==='Enter'){e.preventDefault();sendFree(e.target.value);e.target.value='';userSentFlag=true;render()}
+});
+document.addEventListener('scroll',function(e){
+  var t=e.target;
+  if(t&&t.classList&&t.classList.contains('ibot-thread')){
+    var btn=$('#scrollTopBtn');
+    updBtn();
+  }
+},true);
+var vv=window.visualViewport;
+function vp(){var r=document.documentElement.style;r.setProperty('--vvh',(vv?vv.height:window.innerHeight)+'px');r.setProperty('--vvt',(vv?vv.offsetTop:0)+'px');if(view==='ibot'&&thr())toBottom(false)}
+if(vv){vv.addEventListener('resize',vp);vv.addEventListener('scroll',vp)}
+window.addEventListener('resize',vp);vp();
+document.addEventListener('focusin',function(e){if(e.target&&e.target.id==='ibotIn'){document.body.classList.add('kb');setTimeout(vp,300)}});
+document.addEventListener('focusout',function(e){if(e.target&&e.target.id==='ibotIn'){document.body.classList.remove('kb');setTimeout(vp,100)}});
+document.addEventListener('pointerdown',function(e){var a=document.activeElement;if(e.target.closest&&e.target.closest('.ibot-bar button')&&a&&a.id==='ibotIn')e.preventDefault()});
+function show(v){$('#login').classList.toggle('hide',v);$('#app').classList.toggle('hide',!v);if(v)render()}
+async function enter(){
+  try{await load()}catch(x){await SB.auth.signOut();$('#lerr').textContent=x.message||'Eroare la încărcare.';show(false);return}
+  ready=true;show(true);subscribe();
+}
+$('#lf').onsubmit=async function(e){e.preventDefault();$('#lerr').textContent='';var r=await SB.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error){$('#lerr').textContent='Email sau parolă greșite.';return}enter()};
+$('#out').onclick=async function(){ready=false;clearInterval(pollT);clearTimeout(resubT);if(rt)SB.removeChannel(rt);await SB.auth.signOut();show(false)};
+SB.auth.getSession().then(function(r){if(r.data&&r.data.session)enter()});
+
+setInterval(function(){
+  var ch=false,now=Date.now();
+  S.rooms.forEach(function(r){r.devices.forEach(function(d){
+    if(d.on&&d.heartUntil&&now>=d.heartUntil){setDev(d,false);sys(d.name+': programul s-a terminat, priza a fost oprită.');ch=true}
+    if(d.on&&d.check>0&&!d.asked&&d.since&&(now-d.since)/1000*SCALE/60>=d.check){
+      d.asked=true;S.chat.push({id:++uid,dev:d.id,text:'Mai folosești '+d.name.toLowerCase()+'? Nu a mai fost stinsă de '+d.check+' minute.',time:tm(),done:null});ch=true}
+  })});
+  if(S.sched.length){var due=S.sched.filter(function(x){return x.at<=now});
+    if(due.length){S.sched=S.sched.filter(function(x){return x.at>now});due.forEach(function(x){var d=find(x.dev);if(!d)return;if(!x.on&&d.essential)return;setDev(d,x.on);sys('Programare executată: am '+(x.on?'pornit ':'oprit ')+d.name.toLowerCase()+'.')});ch=true}}
+  if(ch&&!$('#app').classList.contains('hide')&&view!=='set')render();else if(ch)save();
+},1000);
+})();
+</script>
+</body>
+</html>
