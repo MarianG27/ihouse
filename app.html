@@ -211,6 +211,27 @@ input.priceIn[type=number]{width:78px;margin:0;padding:6px 10px;border-radius:10
 #app,#login{position:relative;z-index:1}
 .mw{display:contents}
 @media(prefers-reduced-motion:reduce){.deco g{animation:none}}
+
+.micov{position:fixed;inset:0;z-index:40;background:rgba(12,30,20,.66);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;color:#fff;text-align:center}
+.orbw{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+.orb{position:relative;z-index:2;width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;background:radial-gradient(circle at 35% 28%,#9dffbd,#189947 55%,#0c5a29);box-shadow:0 0 60px rgba(24,153,71,.75),inset 0 -10px 24px rgba(0,0,0,.25);animation:breathe 2.4s ease-in-out infinite;overflow:hidden;padding:0}
+.orb i{position:absolute;inset:-30%;background:conic-gradient(from 0deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,229,138,.0) 40%,rgba(255,255,255,.35) 70%,rgba(255,255,255,0));filter:blur(14px);animation:spin 3.2s linear infinite;mix-blend-mode:soft-light}
+.orbw:before,.orbw:after{content:"";position:absolute;inset:9px;border-radius:50%;border:3px solid rgba(157,255,189,.75);animation:ripple 2.4s ease-out infinite}
+.orbw:after{animation-delay:1.2s}
+.micov.hear .orb{animation-duration:.65s}
+.micov.hear .orb i{animation-duration:1.4s}
+.micov.hear .orbw:before,.micov.hear .orbw:after{animation-duration:1.2s}
+.micov .mst{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.micov .mtx{min-height:3.2em;max-width:420px;font-size:16px;line-height:1.5;color:#dff3e5;overflow-wrap:anywhere}
+.micov .macts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.micov .b.o{background:transparent;color:#fff;border-color:#fff}
+.micov .b.o:hover{background:#fff;color:var(--ink)}
+.micov .b:not(.o){background:#fff;color:var(--ink)}
+.micov .b:not(.o):hover{background:var(--lamp)}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes ripple{from{transform:scale(1);opacity:.8}to{transform:scale(1.9);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.orb,.orb i,.orbw:before,.orbw:after{animation:none}}
 </style>
 </head>
 <body>
@@ -248,6 +269,12 @@ input.priceIn[type=number]{width:78px;margin:0;padding:6px 10px;border-radius:10
 <main id="view"></main>
 </div>
 
+<div id="micov" class="micov hide" role="dialog" aria-modal="true" aria-label="Ascult">
+<div class="orbw"><button class="orb" data-m="send" aria-label="Termină și trimite"><i></i></button></div>
+<div class="mst" id="micst" aria-live="polite">Se pornește microfonul…</div>
+<div class="mtx" id="mictx"></div>
+<div class="macts"><button class="b" data-m="send">Trimite</button><button class="b o" data-m="cancel">Anulează</button></div>
+</div>
 <div id="sy" class="hide" style="position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:#c4302b;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:30"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -414,46 +441,66 @@ function ibotReply(t){
   if(hit){setDev(hit,on);return (on?'Am pornit ':'Am oprit ')+hit.name.toLowerCase()+'.'}
   return 'Am notat mesajul tău. Îmi poți spune „aprinde” sau „stinge” urmat de numele unui echipament sau al unei camere, să reglez intensitatea unui bec (de exemplu „becul din bucătărie la 50%”), sau întreabă-mă cum să economisești curent.';
 }
-var rec=null,recText='',recBase='',recKill=null,micTimer=null;
+var rec=null,recText='',recBase='',recKill=null,micTimer=null,recCancel=false,recEnd=0,recPending=false;
 function micNote(t){note(t);clearTimeout(micTimer);if(t)micTimer=setTimeout(function(){note('')},4500)}
+function micShow(){var o=$('#micov');if(!o)return;o.classList.remove('hide','hear');$('#micst').textContent='Se pornește microfonul…';$('#mictx').textContent=''}
+function micHide(){var o=$('#micov');if(o)o.classList.add('hide')}
 function finishMic(r){
   if(rec!==r)return;
-  clearTimeout(recKill);rec=null;
-  var spoken=recText.trim(),t=((recBase?recBase+' ':'')+spoken).trim();
+  clearTimeout(recKill);rec=null;recEnd=Date.now();
+  var cancel=recCancel;recCancel=false;
+  var spoken=recText.trim(),t=((recBase?recBase+' ':'')+spoken).trim(),base=recBase;
   recText='';recBase='';
+  micHide();
   var inp=$('#ibotIn');
-  if(spoken){if(inp)inp.value='';userSentFlag=true;sendFree(t)}
+  if(cancel){if(inp)inp.value=base}
+  else if(spoken){if(inp)inp.value='';userSentFlag=true;sendFree(t)}
   render();
+}
+function stopMic(){
+  var cur=rec;if(!cur)return;
+  try{cur.stop()}catch(x){}
+  clearTimeout(recKill);
+  recKill=setTimeout(function(){try{cur.abort()}catch(x){}finishMic(cur)},1500);
 }
 function startMic(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){micNote('Browserul nu suportă recunoașterea vocală. Folosește Chrome, Edge sau Safari.');return}
   if(window.isSecureContext===false){micNote('Microfonul funcționează doar pe https sau localhost.');return}
-  if(rec){
-    var cur=rec;
-    try{cur.stop()}catch(x){}
-    clearTimeout(recKill);
-    recKill=setTimeout(function(){try{cur.abort()}catch(x){}finishMic(cur)},1500);
-    return;
-  }
-  var r=new SR();rec=r;recText='';
+  if(rec){stopMic();return}
+  if(recPending)return;
+  var wait=400-(Date.now()-recEnd);
+  if(wait>0){recPending=true;setTimeout(function(){recPending=false;startMic()},wait);return}
+  var r=new SR();rec=r;recText='';recCancel=false;
   var inp0=$('#ibotIn');recBase=inp0?inp0.value.trim():'';
   r.lang='ro-RO';r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+  r.onaudiostart=function(){if(rec!==r)return;$('#micst').textContent='Te ascult…'};
+  r.onspeechstart=function(){if(rec!==r)return;var o=$('#micov');if(o)o.classList.add('hear');$('#micst').textContent='Te ascult…'};
+  r.onspeechend=function(){if(rec!==r)return;var o=$('#micov');if(o)o.classList.remove('hear')};
   r.onresult=function(e){
     if(rec!==r)return;
     var t='';for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
-    recText=t;var inp=$('#ibotIn');if(inp)inp.value=(recBase?recBase+' ':'')+t.trim();
+    recText=t;
+    var inp=$('#ibotIn');if(inp)inp.value=(recBase?recBase+' ':'')+t.trim();
+    var mt=$('#mictx');if(mt)mt.textContent=t.trim();
   };
   r.onerror=function(e){
     if(rec!==r)return;
-    var m={'not-allowed':'Permite accesul la microfon în browser (iconița de lângă adresă) și deschide pagina prin https.','service-not-allowed':'Permite accesul la microfon în browser (iconița de lângă adresă) și deschide pagina prin https.','no-speech':'Nu am auzit nimic. Apasă din nou și vorbește.','audio-capture':'Nu găsesc niciun microfon conectat.','network':'Recunoașterea vocală are nevoie de conexiune la internet.'}[e.error];
+    var perm='Permite accesul la microfon în browser (iconița de lângă adresă) și deschide pagina prin https.';
+    var m={'not-allowed':perm,'service-not-allowed':perm,'no-speech':'Nu am auzit nimic. Apasă din nou și vorbește.','audio-capture':'Nu găsesc niciun microfon conectat.','network':'Recunoașterea vocală are nevoie de conexiune la internet.'}[e.error];
     if(m)micNote(m);
   };
   r.onend=function(){finishMic(r)};
+  micShow();
   try{r.start()}
-  catch(x){rec=null;recText='';recBase='';micNote('Nu am putut porni microfonul. Încearcă din nou.')}
+  catch(x){rec=null;recText='';recBase='';micHide();micNote('Nu am putut porni microfonul. Încearcă din nou.')}
   render();
 }
+(function(){var o=$('#micov');if(!o)return;o.addEventListener('click',function(e){
+  var b=e.target.closest('[data-m]');if(!b)return;
+  if(b.dataset.m==='send'){stopMic()}
+  else if(b.dataset.m==='cancel'){recCancel=true;var c=rec;if(c){try{c.abort()}catch(x){}finishMic(c)}}
+})})();
 var aiWait=false,popMsg=null,typer=null;
 function typeOut(m){
   var full=m.text,i=0,step=Math.max(1,Math.ceil(full.length/170));
