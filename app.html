@@ -414,16 +414,44 @@ function ibotReply(t){
   if(hit){setDev(hit,on);return (on?'Am pornit ':'Am oprit ')+hit.name.toLowerCase()+'.'}
   return 'Am notat mesajul tău. Îmi poți spune „aprinde” sau „stinge” urmat de numele unui echipament sau al unei camere, să reglez intensitatea unui bec (de exemplu „becul din bucătărie la 50%”), sau întreabă-mă cum să economisești curent.';
 }
-var rec=null;
+var rec=null,recText='',recBase='',recKill=null,micTimer=null;
+function micNote(t){note(t);clearTimeout(micTimer);if(t)micTimer=setTimeout(function(){note('')},4500)}
+function finishMic(r){
+  if(rec!==r)return;
+  clearTimeout(recKill);rec=null;
+  var spoken=recText.trim(),t=((recBase?recBase+' ':'')+spoken).trim();
+  recText='';recBase='';
+  var inp=$('#ibotIn');
+  if(spoken){if(inp)inp.value='';userSentFlag=true;sendFree(t)}
+  render();
+}
 function startMic(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){alert('Browserul nu suportă recunoașterea vocală. Folosește Chrome, Edge sau Safari.');return}
-  if(rec){rec.stop();return}
-  rec=new SR();rec.lang='ro-RO';rec.interimResults=true;rec.continuous=false;
-  rec.onresult=function(e){var t='';for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;var inp=$('#ibotIn');if(inp)inp.value=t};
-  rec.onerror=function(e){if(e.error==='not-allowed'||e.error==='service-not-allowed')alert('Permite accesul la microfon în browser și deschide pagina prin https.')};
-  rec.onend=function(){rec=null;var inp=$('#ibotIn'),t=inp?inp.value.trim():'';if(t){sendFree(t);inp.value='';userSentFlag=true}render()};
-  try{rec.start()}catch(x){rec=null}
+  if(!SR){micNote('Browserul nu suportă recunoașterea vocală. Folosește Chrome, Edge sau Safari.');return}
+  if(window.isSecureContext===false){micNote('Microfonul funcționează doar pe https sau localhost.');return}
+  if(rec){
+    var cur=rec;
+    try{cur.stop()}catch(x){}
+    clearTimeout(recKill);
+    recKill=setTimeout(function(){try{cur.abort()}catch(x){}finishMic(cur)},1500);
+    return;
+  }
+  var r=new SR();rec=r;recText='';
+  var inp0=$('#ibotIn');recBase=inp0?inp0.value.trim():'';
+  r.lang='ro-RO';r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+  r.onresult=function(e){
+    if(rec!==r)return;
+    var t='';for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
+    recText=t;var inp=$('#ibotIn');if(inp)inp.value=(recBase?recBase+' ':'')+t.trim();
+  };
+  r.onerror=function(e){
+    if(rec!==r)return;
+    var m={'not-allowed':'Permite accesul la microfon în browser (iconița de lângă adresă) și deschide pagina prin https.','service-not-allowed':'Permite accesul la microfon în browser (iconița de lângă adresă) și deschide pagina prin https.','no-speech':'Nu am auzit nimic. Apasă din nou și vorbește.','audio-capture':'Nu găsesc niciun microfon conectat.','network':'Recunoașterea vocală are nevoie de conexiune la internet.'}[e.error];
+    if(m)micNote(m);
+  };
+  r.onend=function(){finishMic(r)};
+  try{r.start()}
+  catch(x){rec=null;recText='';recBase='';micNote('Nu am putut porni microfonul. Încearcă din nou.')}
   render();
 }
 var aiWait=false,popMsg=null,typer=null;
