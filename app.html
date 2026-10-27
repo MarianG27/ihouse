@@ -335,8 +335,10 @@ async function push(){
     try{for(var q2=0;q2<S.sched.length;q2++)await up('schedules','s',S.sched[q2],scRow(S.sched[q2]))}catch(x2){console.warn('schedules:',x2.message||x2);S.sched.forEach(function(x){seen['s'+x.id]=1})}
     var tabs={t:'device_types',r:'rooms',d:'devices',m:'ibot_messages',s:'schedules'};
     for(var key in snap){if(!seen[key]){var z=await SB.from(tabs[key[0]]).delete().eq('id',key.slice(1));if(z.error)throw z.error;delete snap[key]}}
-    var sj=JSON.stringify(sRow());
-    if(sj!==sSnap){var u=await SB.from('settings').update(sRow()).eq('id',1);if(u.error)throw u.error;sSnap=sj}
+    var sr=sRow(),so={},sd={},sn=0;
+    try{so=sSnap?JSON.parse(sSnap):{}}catch(x3){so={}}
+    for(var sk in sr)if(sr[sk]!==so[sk]){sd[sk]=sr[sk];sn++}
+    if(sn){var u=await SB.from('settings').update(sd).eq('id',1);if(u.error)throw u.error;sSnap=JSON.stringify(sr)}
     note('');
   }catch(x){note('Nu s-a salvat: '+(x.message||x))}
   busy=false;
@@ -349,7 +351,7 @@ function subscribe(){
   var ev=function(){clearTimeout(rtT);rtT=setTimeout(async function(){
     if(busy||timer||dirty)return;var a=document.activeElement;if(a&&a.tagName==='INPUT')return;
     try{await load()}catch(x){return}
-    if(S.count===0&&!S.off)offOn();
+    applyCount();
     render();
   },500)};
   rt=SB.channel('ihouse').on('postgres_changes',{event:'*',schema:'public',table:'devices'},ev).on('postgres_changes',{event:'*',schema:'public',table:'settings'},ev).on('postgres_changes',{event:'*',schema:'public',table:'ibot_messages'},ev).subscribe();
@@ -374,7 +376,40 @@ function offOn(){
   })});
   sys('Modul OFF activat: luminile și prizele neesențiale s-au oprit.'+(asked?' Echipamentele protejate rămân pornite până răspunzi lui ibot.':''));
 }
-function setCount(n){S.count=Math.max(0,n);if(S.count===0&&!S.off)offOn();else if(S.count>0&&S.off){S.off=false;S.rooms.forEach(function(r){r.devices.forEach(function(d){d.heartAsked=false})});sys('Cineva a intrat: Modul OFF s-a dezactivat.')}}
+function applyCount(){
+  if(S.count===0&&!S.off)offOn();
+  else if(S.count>0&&S.off){S.off=false;S.rooms.forEach(function(r){r.devices.forEach(function(d){d.heartAsked=false})});sys('Cineva a intrat: Modul OFF s-a dezactivat.')}
+}
+function setCount(n){S.count=Math.max(0,n);applyCount()}
+/* Numărul de persoane vine de la ESP32 (lasere) prin Supabase: verificăm des, fără să stricem ce scrii în pagină */
+var cntBusy=false;
+function paintCount(){
+  var a=document.activeElement;
+  if(a&&a.tagName==='INPUT'&&view==='home'){
+    var n=document.querySelector('.hero .num'),h=document.querySelector('.hero'),b=document.querySelector('.hero .t b');
+    if(n)n.textContent=S.count;
+    if(h)h.classList.toggle('z',S.count===0);
+    if(b)b.textContent=S.count===0?'Persoane în casă: 0 – Mod OFF activat':'Persoane în casă: '+S.count;
+    save();
+  }else render();
+}
+async function syncCount(){
+  if(!ready||cntBusy||busy||timer||dirty||document.hidden)return;
+  cntBusy=true;
+  try{
+    var r=await SB.from('settings').select('people_count').eq('id',1).maybeSingle();
+    if(r.error||!r.data)return;
+    var n=Math.max(0,parseInt(r.data.people_count,10)||0);
+    if(busy||timer||dirty||n===S.count)return;
+    S.count=n;
+    try{var o=sSnap?JSON.parse(sSnap):{};o.people_count=n;sSnap=JSON.stringify(o)}catch(x){}
+    applyCount();
+    paintCount();
+  }catch(x){console.warn('syncCount:',x&&x.message||x)}
+  finally{cntBusy=false}
+}
+setInterval(syncCount,2000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)syncCount()});
 var HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
 var BULB='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
 function dimSheet(d){
