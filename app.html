@@ -212,29 +212,54 @@ input.priceIn[type=number]{width:78px;margin:0;padding:6px 10px;border-radius:10
 .mw{display:contents}
 @media(prefers-reduced-motion:reduce){.deco g{animation:none}}
 
-/* ecran ascultare ibot */
-.micov{position:fixed;inset:0;z-index:60;background:rgba(12,30,20,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;color:#fff;text-align:center}
-.orbw{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center;transform:scale(calc(1 + var(--lv,0)*.3));transition:transform .08s linear}
-.orb{position:relative;z-index:2;width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;background:radial-gradient(circle at 35% 28%,#9dffbd,#189947 55%,#0c5a29);box-shadow:0 0 60px rgba(24,153,71,.75),inset 0 -10px 24px rgba(0,0,0,.25);animation:breathe 2.4s ease-in-out infinite;overflow:hidden;padding:0}
-.orb i{position:absolute;inset:-30%;background:conic-gradient(from 0deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,229,138,0) 40%,rgba(255,255,255,.35) 70%,rgba(255,255,255,0));filter:blur(14px);animation:spin 3.2s linear infinite;mix-blend-mode:soft-light}
-.orbw:before,.orbw:after{content:"";position:absolute;inset:9px;border-radius:50%;border:3px solid rgba(157,255,189,.75);animation:ripple 2.4s ease-out infinite}
-.orbw:after{animation-delay:1.2s}
-.micov.hear .orb{animation-duration:.65s}
-.micov.hear .orb i{animation-duration:1.4s}
-.micov.hear .orbw:before,.micov.hear .orbw:after{animation-duration:1.2s}
-.micov[data-st=starting] .orbw:before,.micov[data-st=starting] .orbw:after,.micov[data-st=processing] .orbw:before,.micov[data-st=processing] .orbw:after{display:none}
-.micov[data-st=processing] .orb i{animation-duration:.9s}
-.micov[data-st=processing] .orb{animation-duration:1.1s;cursor:default}
-.micov .mst{font-size:20px;font-weight:600;letter-spacing:-.02em}
-.micov .macts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.micov .b{background:#fff;color:var(--ink);padding:12px 24px;font-size:15px}
-.micov .b:hover{background:var(--lamp)}
-.micov .b.o{background:transparent;color:#fff;border:2px solid #fff}
-.micov .b.o:hover{background:#fff;color:var(--ink)}
-@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-@keyframes ripple{from{transform:scale(1);opacity:.8}to{transform:scale(1.9);opacity:0}}
+/* navigare cu iconițe */
+.nv .nl{display:flex;align-items:center;gap:10px}
+.nv .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@media(max-width:800px){
+aside{left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:8px;gap:4px;border:0;border-radius:30px;background:#fff;box-shadow:0 12px 32px rgba(23,32,27,.18),0 0 0 1px rgba(23,32,27,.04);overflow:visible}
+aside button.nv{flex:1;min-width:0;flex-direction:column;justify-content:center;align-items:center;gap:0;padding:9px 2px 8px;border-radius:22px;font-size:11px;font-weight:600;position:relative;color:var(--mut);background:none;transition:background .2s,color .2s}
+aside button.nv .nl{flex-direction:column;gap:3px;min-width:0}
+aside button.nv .ic{width:24px;height:24px}
+aside button.nv:hover{background:none}
+aside button.nv.on,aside button.nv.on:hover{background:#dff3e6;color:var(--gd)}
+aside .nv .badge{position:absolute;top:5px;left:calc(50% + 8px);min-width:18px;height:18px;line-height:18px;padding:0 5px;font-size:10px;text-align:center}
+.ibotWrap{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))!important}
+body.kb .ibotWrap{padding-bottom:10px!important}
+}
+/* mesaj vocal */
+.ibot-rec{display:flex;align-items:center;gap:10px;padding:10px 0 0;flex-shrink:0;max-width:560px;width:100%}
+.ibot-rec .rbody{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-radius:40px;padding:0 16px;height:48px}
+.ibot-rec .dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex:none;animation:recdot 1.1s ease-in-out infinite}
+.ibot-rec .tm{font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;min-width:2.5em;flex:none}
+.ibot-rec .wv{flex:1;min-width:0;height:28px;display:flex;align-items:center;justify-content:flex-end;gap:2px;overflow:hidden}
+.ibot-rec .wv i{flex:1;max-width:4px;min-width:2px;border-radius:2px;background:var(--g);height:10%;transition:height .08s linear}
+.ibot-rec .lbl{flex:1;font-size:14px;color:var(--mut)}
+.ibot-rec .sp{display:none;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--g);border-radius:50%;animation:spin .8s linear infinite;flex:none}
+.ibot-rec .rb{width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.ibot-rec .rb svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ibot-rec .rx{background:#fff;color:var(--red);border:2px solid var(--line)}
+.ibot-rec .rx:hover{border-color:var(--red)}
+.ibot-rec .rs{background:var(--g);color:#fff}
+.ibot-rec .rs:hover{background:var(--gd)}
+.ibot-rec[data-st=recording] .lbl,.ibot-rec[data-st=recording] .sp{display:none}
+.ibot-rec[data-st=starting] .dot,.ibot-rec[data-st=starting] .tm,.ibot-rec[data-st=starting] .wv,.ibot-rec[data-st=processing] .dot,.ibot-rec[data-st=processing] .tm,.ibot-rec[data-st=processing] .wv{display:none}
+.ibot-rec[data-st=starting] .sp,.ibot-rec[data-st=processing] .sp{display:block}
+.ibot-rec[data-st=starting] .rs,.ibot-rec[data-st=processing] .rs{display:none}
+.wv.fake i{animation:wvp 1s ease-in-out infinite}
+.wv.fake i:nth-child(3n){animation-delay:.2s}.wv.fake i:nth-child(3n+1){animation-delay:.45s}
+@keyframes recdot{50%{opacity:.25}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.orb,.orb i,.orbw:before,.orbw:after{animation:none}.orbw{transition:none}}
+@keyframes wvp{0%,100%{height:12%}50%{height:60%}}
+@media(prefers-reduced-motion:reduce){.ibot-rec .dot,.ibot-rec .sp,.wv.fake i{animation:none}}
+/* text selectabil / copiabil */
+.m,.m *,main p,main li,main h1,main h2,main h3{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+/* preferințe */
+.pf p{font-size:14px;color:var(--mut);margin-bottom:6px}
+.pf small{display:block;margin-top:8px;color:var(--mut);font-size:12px}
+.rad{display:flex;gap:12px;align-items:flex-start;padding:10px 0;cursor:pointer;font-size:14px}
+.rad input{width:20px;height:20px;margin-top:2px;accent-color:var(--g);flex:none}
+.rad b{display:block;font-size:15px}
+.rad span{color:var(--mut)}
 </style>
 </head>
 <body>
@@ -263,20 +288,15 @@ input.priceIn[type=number]{width:78px;margin:0;padding:6px 10px;border-radius:10
 <div id="app" class="hide">
 <aside>
 <img src="logo.png" alt="ihouse">
-<button class="nv" data-v="home">Acasă</button>
-<button class="nv" data-v="rooms">Camere</button>
-<button class="nv" data-v="ibot">ibot <span class="badge hide" id="bd"></span></button>
-<button class="nv" data-v="set">Setări</button>
+<button class="nv" data-v="home"><span class="nl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10.5 9-7.5 9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Acasă</span></span></button>
+<button class="nv" data-v="rooms"><span class="nl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Camere</span></span></button>
+<button class="nv" data-v="ibot"><span class="nl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg><span>ibot</span></span> <span class="badge hide" id="bd"></span></button>
+<button class="nv" data-v="set"><span class="nl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>Setări</span></span></button>
 <div class="bt"><a href="index.html">Pagina de prezentare</a><button class="b o s" id="out">Ieși din cont</button></div>
 </aside>
 <main id="view"></main>
 </div>
 
-<div id="micov" class="micov hide" data-st="starting" role="dialog" aria-modal="true" aria-label="Ascult">
-<div class="orbw"><button type="button" class="orb" data-m="send" aria-label="Termină și trimite"><i></i></button></div>
-<div class="mst" id="micst" aria-live="polite">Se pornește microfonul…</div>
-<div class="macts"><button type="button" class="b" id="micsend" data-m="send">Trimite</button><button type="button" class="b o" data-m="cancel">Anulează</button></div>
-</div>
 <div id="sy" class="hide" style="position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:#c4302b;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:30"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -291,7 +311,9 @@ function note(t){var n=$('#sy');n.textContent=t||'';n.classList.toggle('hide',!t
 function tyOf(d){return S.types.filter(function(t){return t.code===d.type})[0]||{}}
 function isDim(d){return !!tyOf(d).dimmable}
 function tn(d){return tyOf(d).name||d.type}
-function chOpts(d){var o='<option value="0">—</option>';for(var i=1;i<=6;i++)o+='<option value="'+i+'"'+(d.channel===i?' selected':'')+'>Port '+i+'</option>';return o}
+var MAXCH=8;
+function isTV(d){return /televizor|\btv\b/i.test((tyOf(d).name||'')+' '+(d.name||''))}
+function chOpts(d){var o='<option value="0">—</option>';for(var i=1;i<=MAXCH;i++)o+='<option value="'+i+'"'+(d.channel===i?' selected':'')+'>Port '+i+'</option>';return o}
 function typeOpts(){return S.types.map(function(t){return '<option value="'+esc(t.code)+'">'+esc(t.name)+'</option>'}).join('')}
 function tRow(t){return {code:t.code,name:t.name,dimmable:!!t.dimmable,default_watt:t.default_watt||0,default_hours:t.default_hours||0}}
 function rRow(r,i){return {name:r.name,position:i}}
@@ -350,6 +372,7 @@ function subscribe(){
   if(rt)SB.removeChannel(rt);
   var ev=function(){clearTimeout(rtT);rtT=setTimeout(async function(){
     if(busy||timer||dirty)return;var a=document.activeElement;if(a&&a.tagName==='INPUT')return;
+    if(selBusy()){ev();return}
     try{await load()}catch(x){return}
     applyCount();
     render();
@@ -376,6 +399,16 @@ function offOn(){
   })});
   sys('Modul OFF activat: luminile și prizele neesențiale s-au oprit.'+(asked?' Echipamentele protejate rămân pornite până răspunzi lui ibot.':''));
 }
+var PREF={voice:'manual'};
+(function(){try{var v=localStorage.getItem('ihouse_pref_voice');if(v==='auto'||v==='manual')PREF.voice=v}catch(x){}})();
+function prefSet(k,v){PREF[k]=v;try{localStorage.setItem('ihouse_pref_'+k,v)}catch(x){}}
+function prefBox(){
+  return '<div class="set pf"><h3>Preferințe</h3><b>Mesaje vocale către ibot</b><p>După ce termini de vorbit, mesajul este transcris în text. Alege ce se întâmplă apoi.</p>'+
+  '<label class="rad"><input type="radio" name="prefVoice" value="manual"'+(PREF.voice==='manual'?' checked':'')+'><span><b>Îl trimit eu</b>Textul apare în bara de mesaj, îl verifici sau îl corectezi și apeși Trimite.</span></label>'+
+  '<label class="rad"><input type="radio" name="prefVoice" value="auto"'+(PREF.voice==='auto'?' checked':'')+'><span><b>Se trimite automat</b>Mesajul pleacă imediat după transcriere.</span></label>'+
+  '<small>Se salvează pe acest dispozitiv.</small></div>';
+}
+function selBusy(){try{var sl=window.getSelection();return !!(sl&&!sl.isCollapsed&&String(sl)&&$('#view').contains(sl.anchorNode))}catch(x){return false}}
 function applyCount(){
   if(S.count===0&&!S.off)offOn();
   else if(S.count>0&&S.off){S.off=false;S.rooms.forEach(function(r){r.devices.forEach(function(d){d.heartAsked=false})});sys('Cineva a intrat: Modul OFF s-a dezactivat.')}
@@ -385,7 +418,7 @@ function setCount(n){S.count=Math.max(0,n);applyCount()}
 var cntBusy=false;
 function paintCount(){
   var a=document.activeElement;
-  if(a&&a.tagName==='INPUT'&&view==='home'){
+  if((selBusy()||(a&&a.tagName==='INPUT'))&&view==='home'){
     var n=document.querySelector('.hero .num'),h=document.querySelector('.hero'),b=document.querySelector('.hero .t b');
     if(n)n.textContent=S.count;
     if(h)h.classList.toggle('z',S.count===0);
@@ -491,21 +524,35 @@ function ibotReply(t){
   if(hit){setDev(hit,on);return (on?'Am pornit ':'Am oprit ')+hit.name.toLowerCase()+'.'}
   return 'Am notat mesajul tău. Îmi poți spune „aprinde” sau „stinge” urmat de numele unui echipament sau al unei camere, să reglez intensitatea unui bec (de exemplu „becul din bucătărie la 50%”), sau întreabă-mă cum să economisești curent.';
 }
-/* ===== Voce: MediaRecorder -> Edge Function "ibot-voice" -> Groq Whisper (fără SpeechRecognition) ===== */
-var vs='idle',vRec=null,vStream=null,vChunks=[],vMime='',vT0=0,vTok=0,vAC=null,vAn=null,vRaf=0,vHeard=false,vAlive=false,vSilSince=0,vMaxT=null,vStopT=null,vNoteT=null;
-var VMAX=25000,VMIN=700,VSIL=1700,VNOSPEECH=9000,VTH=0.035;
+/* ===== Voce: MediaRecorder -> Edge Function "ibot-voice" -> Groq Whisper ===== */
+var vs='idle',vRec=null,vStream=null,vChunks=[],vMime='',vT0=0,vTok=0,vAC=null,vAn=null,vRaf=0,vHeard=false,vAlive=false,vMaxT=null,vStopT=null,vNoteT=null,vTick=null,vLvT=0,vLv=[];
+var VMAX=60000,VMIN=700,VBARS=40;
 function vNote(t){note(t);clearTimeout(vNoteT);if(t)vNoteT=setTimeout(function(){note('')},7000)}
 function micLbl(){return vs==='idle'?'Vorbește':vs==='processing'?'Se transcrie…':'Ascult…'}
 function updMicBtn(){var b=document.querySelector('[data-a="mic"]');if(b)b.textContent=micLbl()}
-function vShow(st){
-  var o=$('#micov');if(!o)return;
-  o.classList.remove('hide');o.dataset.st=st;
-  $('#micst').textContent={starting:'Se pornește microfonul…',recording:'Te ascult…',processing:'Se transcrie…'}[st]||'';
-  $('#micsend').classList.toggle('hide',st==='processing');
+/* arată bara de înregistrare în locul barei de text */
+function updMicUI(){
+  var rb=$('#recBar'),tb=document.querySelector('.ibot-bar');
+  if(!rb)return;
+  var on=vs!=='idle';
+  rb.classList.toggle('hide',!on);
+  if(tb)tb.classList.toggle('hide',on);
+  if(on){
+    rb.dataset.st=vs;
+    var l=$('#recL');if(l)l.textContent=vs==='starting'?'Se pornește microfonul…':vs==='processing'?'Se transcrie…':'';
+  }
+}
+function vShow(){updMicUI()}
+function vTime(){var t=$('#recT');if(!t)return;var n=Math.floor((Date.now()-vT0)/1000);t.textContent=Math.floor(n/60)+':'+('0'+n%60).slice(-2)}
+function vWave(v){
+  var w=$('#recW');if(!w)return;
+  vLv.push(v);if(vLv.length>VBARS)vLv.shift();
+  var b=w.children,off=VBARS-vLv.length;
+  for(var i=0;i<b.length;i++){var x=i<off?0:vLv[i-off];b[i].style.height=Math.max(10,Math.round(x*100))+'%'}
 }
 function vStopTracks(s){if(s)s.getTracks().forEach(function(t){try{t.stop()}catch(x){}})}
 function vCleanup(){
-  clearTimeout(vMaxT);clearTimeout(vStopT);cancelAnimationFrame(vRaf);vRaf=0;vAn=null;
+  clearTimeout(vMaxT);clearTimeout(vStopT);clearInterval(vTick);cancelAnimationFrame(vRaf);vRaf=0;vAn=null;
   if(vAC){try{vAC.close()}catch(x){}vAC=null}
   vStopTracks(vStream);vStream=null;
 }
@@ -514,8 +561,7 @@ function vReset(){
   var r=vRec;vRec=null;
   if(r){r.ondataavailable=r.onstop=r.onerror=null;try{if(r.state!=='inactive')r.stop()}catch(x){}}
   vChunks=[];vs='idle';
-  var o=$('#micov');if(o){o.classList.add('hide');o.classList.remove('hear');o.style.removeProperty('--lv')}
-  updMicBtn();
+  updMicUI();updMicBtn();
 }
 function vPick(){
   if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return '';
@@ -555,20 +601,15 @@ function vMeter(stream){
     if(!vAC)return;
     if(vAC.state==='suspended'&&vAC.resume)vAC.resume();
     var src=vAC.createMediaStreamSource(stream);vAn=vAC.createAnalyser();vAn.fftSize=1024;src.connect(vAn);
-    var buf=new Uint8Array(vAn.fftSize),o=$('#micov'),tok=vTok;
+    var buf=new Uint8Array(vAn.fftSize),tok=vTok;
     (function loop(){
       if(tok!==vTok||vs!=='recording'||!vAn)return;
       vAn.getByteTimeDomainData(buf);
       var s=0;for(var i=0;i<buf.length;i++){var v=(buf[i]-128)/128;s+=v*v}
       var rms=Math.sqrt(s/buf.length),now=Date.now();
       if(rms>0.0008)vAlive=true;
-      if(o)o.style.setProperty('--lv',Math.min(1,rms*6).toFixed(2));
-      if(rms>VTH){vHeard=true;vSilSince=0;if(o)o.classList.add('hear')}
-      else{
-        if(o)o.classList.remove('hear');
-        if(vHeard){if(!vSilSince)vSilSince=now;else if(now-vSilSince>VSIL&&now-vT0>VMIN){vStop(true);return}}
-        else if(vAlive&&now-vT0>VNOSPEECH){vReset();vNote('Nu am auzit nimic. Apasă din nou și vorbește.');return}
-      }
+      if(rms>0.035)vHeard=true;
+      if(now-vLvT>70){vLvT=now;vWave(Math.min(1,rms*7))}
       vRaf=requestAnimationFrame(loop);
     })();
   }catch(x){vAn=null}
@@ -579,9 +620,9 @@ async function startMic(){
   if(!window.isSecureContext){vNote('Microfonul funcționează doar pe https sau localhost.');return}
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){vNote('Browserul nu permite accesul la microfon.');return}
   if(!window.MediaRecorder){vNote('Browserul nu suportă înregistrarea audio. Actualizează Chrome, Edge sau Safari.');return}
-  vs='starting';vHeard=false;vAlive=false;vSilSince=0;
+  vs='starting';vHeard=false;vAlive=false;vLv=[];
   var tok=++vTok;
-  vPrimeAC();vShow('starting');updMicBtn();
+  vPrimeAC();vShow();updMicBtn();
   var stream;
   try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
   catch(e){if(tok!==vTok)return;vReset();vNote(vErrMsg(e));return}
@@ -596,15 +637,18 @@ async function startMic(){
   r.onstop=function(){vOnStop(r,tok)};
   vT0=Date.now();
   try{r.start(250)}catch(e){vReset();vNote('Nu am putut porni înregistrarea.');return}
-  vs='recording';vShow('recording');updMicBtn();vMeter(stream);
+  vs='recording';vShow();updMicBtn();vTime();
+  vTick=setInterval(vTime,250);
+  vMeter(stream);
+  var w=$('#recW');if(w)w.classList.toggle('fake',!vAn);
   vMaxT=setTimeout(function(){if(tok===vTok&&vs==='recording')vStop(true)},VMAX);
 }
 function vStop(send){
   if(vs!=='recording'||!vRec)return;
   if(!send){vReset();return}
   var r=vRec,tok=vTok;
-  vs='processing';vShow('processing');updMicBtn();
-  clearTimeout(vMaxT);cancelAnimationFrame(vRaf);
+  vs='processing';vShow();updMicBtn();
+  clearTimeout(vMaxT);cancelAnimationFrame(vRaf);clearInterval(vTick);
   try{r.stop()}catch(x){vReset();vNote('Nu am putut opri înregistrarea.');return}
   vStopT=setTimeout(function(){vOnStop(r,tok)},2500);
 }
@@ -614,7 +658,7 @@ async function vOnStop(r,tok){
   var dur=Date.now()-vT0,heard=vHeard,alive=vAlive,type=(r.mimeType||vMime||'audio/webm').split(';')[0];
   var blob=new Blob(vChunks,{type:type});
   vCleanup();
-  if(dur<VMIN||blob.size<1200){vReset();vNote('Prea scurt. Apasă „Vorbește” și spune comanda.');return}
+  if(dur<VMIN||blob.size<1200){vReset();vNote('Prea scurt. Ține apăsat și spune comanda.');return}
   if(alive&&!heard){vReset();vNote('Nu am auzit nimic. Apasă din nou și vorbește.');return}
   var ext=/mp4|m4a|aac/.test(type)?'m4a':/ogg/.test(type)?'ogg':'webm';
   var fd=new FormData();fd.append('audio',blob,'voce.'+ext);fd.append('language','ro');
@@ -630,17 +674,19 @@ async function vOnStop(r,tok){
   vReset();
   if(err){vNote(err);return}
   if(!text||vJunk(text)){vNote('Nu am înțeles. Apasă din nou și vorbește clar.');return}
-  userSentFlag=true;sendFree(text);
+  var inp=$('#ibotIn');
+  if(PREF.voice==='auto'||!inp){userSentFlag=true;sendFree(text)}
+  else{
+    inp.value=(inp.value.trim()?inp.value.trim()+' ':'')+text;
+    try{if(window.matchMedia&&matchMedia('(pointer:fine)').matches)inp.focus()}catch(x){}
+  }
 }
-(function(){
-  var o=$('#micov');if(!o)return;
-  o.addEventListener('click',function(e){
-    var b=e.target.closest('[data-m]');if(!b)return;
-    if(b.dataset.m==='send')vStop(true);else vReset();
-  });
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&vs!=='idle')vReset()});
-  document.addEventListener('visibilitychange',function(){if(document.hidden&&(vs==='recording'||vs==='starting'))vReset()});
-})();
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-m]');if(!b)return;
+  if(b.dataset.m==='send')vStop(true);else if(b.dataset.m==='cancel')vReset();
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&vs!=='idle')vReset()});
+document.addEventListener('visibilitychange',function(){if(document.hidden&&(vs==='recording'||vs==='starting'))vReset()});
 var aiWait=false,popMsg=null,typer=null;
 function typeOut(m){
   var full=m.text,i=0,step=Math.max(1,Math.ceil(full.length/170));
@@ -714,6 +760,7 @@ function syncThread(t){
   t._items=items.map(norm);
 }
 function render(){
+  if(view!=='ibot'&&vs!=='idle')vReset();
   var ii=$('#ibotIn'),keepVal=ii?ii.value:null,keepFocus=ii&&document.activeElement===ii;
   document.querySelectorAll('.nv').forEach(function(b){b.classList.toggle('on',b.dataset.v===view)});
   var p=pending(),bd=$('#bd');bd.textContent=p;bd.classList.toggle('hide',!p);
@@ -759,9 +806,9 @@ function render(){
     h='<div class="ibotWrap"><h1>ibot</h1><div class="chatBody">'+
     '<div class="thread ibot-thread">'+chatItems().join('')+'</div>'+
     '<button class="scrollTop" id="scrollTopBtn" data-a="totop" aria-label="Mergi la ultimul mesaj" title="Mergi la ultimul mesaj">↓</button></div>'+
-    '<div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="mic" aria-label="Vorbește cu ibot">'+micLbl()+'</button><button class="b s" data-a="send">Trimite</button></div></div>';
+    '<div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="mic" aria-label="Vorbește cu ibot">'+micLbl()+'</button><button class="b s" data-a="send">Trimite</button></div>'+'<div class="ibot-rec hide" id="recBar" data-st="recording" role="group" aria-label="Mesaj vocal"><button type="button" class="rb rx" data-m="cancel" aria-label="Anulează mesajul vocal" title="Anulează"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button><div class="rbody"><span class="dot"></span><span class="tm" id="recT">0:00</span><span class="sp"></span><span class="lbl" id="recL"></span><div class="wv" id="recW" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><button type="button" class="rb rs" data-m="send" aria-label="Trimite mesajul vocal" title="Trimite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>'+'</div>';
   }else{
-    h='<h1>Setări</h1>'+S.rooms.map(function(r){
+    h='<h1>Setări</h1>'+prefBox()+S.rooms.map(function(r){
       return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
       r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><div><select data-k="ch" data-d="'+d.id+'" aria-label="Port ESP32">'+chOpts(d)+'</select><small>Port ESP32</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
       '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip">'+typeOpts()+'</select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
@@ -771,7 +818,7 @@ function render(){
   var vw=$('#view');
   if(view==='ibot'&&vw.dataset.v==='ibot'&&thr()){syncThread(thr());var mb=document.querySelector('[data-a="mic"]');if(mb)mb.textContent=micLbl()}
   else{vw.innerHTML=h;vw.dataset.v=view;if(thr())thr()._items=chatItems().map(function(x){return x.replace(' pop"','"')})}
-  popMsg=null;save();
+  popMsg=null;updMicUI();save();
   if(focusDim){var fi=$('#dimIn');if(fi)fi.focus();focusDim=false}
   if(view==='ibot'){
     var nin=$('#ibotIn');
@@ -783,8 +830,9 @@ function render(){
 }
 
 document.addEventListener('click',function(e){
-  var b=e.target.closest('[data-a],[data-v]');if(!b)return;
+  var b=e.target.closest('[data-a],[data-v]');if(!b||b.id==='view')return;
   if(b.dataset.a==='none')return;
+  if(b.dataset.v&&vs!=='idle')vReset();
   if(b.dataset.v){dimId=null;view=b.dataset.v;if(view==='ibot')userSentFlag=true;render();return}
   var a=b.dataset.a,d=b.dataset.d?find(b.dataset.d):null,r=S.rooms.filter(function(x){return x.id==b.dataset.r})[0],m=S.chat.filter(function(x){return x.id==b.dataset.n})[0];
   if(a==='in')setCount(S.count+1);
@@ -813,6 +861,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('change',function(e){
   var t=e.target;
+  if(t.name==='prefVoice'){prefSet('voice',t.value);return}
   if(t.id==='price'){S.price=Math.max(0,+t.value||0);render();return}
   var k=t.dataset.k;if(!k)return;
   if(t.dataset.t){var tt=S.types.filter(function(x){return x.id==t.dataset.t})[0];if(tt){if(k==='tn'&&t.value.trim())tt.name=t.value.trim();if(k==='td')tt.dimmable=t.checked;if(k==='tw')tt.default_watt=Math.max(0,+t.value||0);if(k==='th')tt.default_hours=Math.max(0,+t.value||0)}save();render();return}
@@ -870,11 +919,11 @@ setInterval(function(){
   S.rooms.forEach(function(r){r.devices.forEach(function(d){
     if(d.on&&d.heartUntil&&now>=d.heartUntil){setDev(d,false);sys(d.name+': programul s-a terminat, priza a fost oprită.');ch=true}
     if(d.on&&d.check>0&&!d.asked&&d.since&&(now-d.since)/1000*SCALE/60>=d.check){
-      d.asked=true;S.chat.push({id:++uid,dev:d.id,text:'Mai folosești '+d.name.toLowerCase()+'? Nu a mai fost stinsă de '+d.check+' minute.',time:tm(),done:null});ch=true}
+      d.asked=true;S.chat.push({id:++uid,dev:d.id,text:(isTV(d)?'Te mai uiți la '+d.name.toLowerCase()+'? Rulează de '+d.check+' minute.':'Mai folosești '+d.name.toLowerCase()+'? Nu a mai fost stinsă de '+d.check+' minute.'),time:tm(),done:null});ch=true}
   })});
   if(S.sched.length){var due=S.sched.filter(function(x){return x.at<=now});
     if(due.length){S.sched=S.sched.filter(function(x){return x.at>now});due.forEach(function(x){var d=find(x.dev);if(!d)return;if(!x.on&&d.essential)return;setDev(d,x.on);sys('Programare executată: am '+(x.on?'pornit ':'oprit ')+d.name.toLowerCase()+'.')});ch=true}}
-  if(ch&&!$('#app').classList.contains('hide')&&view!=='set')render();else if(ch)save();
+  if(ch&&!$('#app').classList.contains('hide')&&view!=='set'&&!selBusy())render();else if(ch)save();
 },1000);
 })();
 </script>
