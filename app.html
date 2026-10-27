@@ -987,7 +987,7 @@ document.addEventListener('click',function(e){
   else if(a==='nkeep'&&m){var x=find(m.dev);if(x){x.since=Date.now();x.asked=false}m.done='Las aprinsă';userSentFlag=true}
   else if(a==='hset'&&m){var inp=document.getElementById('hmin'+m.id);var mins=inp?Math.max(1,Math.round(+inp.value||0)):0;if(!inp||!+inp.value){if(inp)inp.focus();return}var dv=find(m.dev);if(dv)dv.heartUntil=Date.now()+mins*60000;m.done='Program setat: '+mins+' min';userSentFlag=true}
   else if(a==='hstop'&&m){var x1=find(m.dev);if(x1)setDev(x1,false);m.done='Oprire imediată';userSentFlag=true}
-  else if(a==='send'){vCancel();var i=$('#ibotIn'),v=i.value;i.value='';sendFree(v);return}
+  else if(a==='send'){var i=$('#ibotIn'),v=i.value;vCancel();i=$('#ibotIn');if(i)i.value='';sendFree(v);return}
   else if(a==='askibot'){view='ibot';userSentFlag=true;sendFree('Cum pot să economisesc curent electric?');return}
   render();
 });
@@ -1012,7 +1012,7 @@ document.addEventListener('input',function(e){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'&&dimId){dimId=null;render();return}
   var t=e.target;
-  if(t&&t.id==='ibotIn'&&e.key==='Enter'){e.preventDefault();if(e.isComposing)return;vCancel();var v=t.value;t.value='';sendFree(v);return}
+  if(t&&t.id==='ibotIn'&&e.key==='Enter'){e.preventDefault();if(e.isComposing)return;var v=t.value;vCancel();t=$('#ibotIn');if(t)t.value='';sendFree(v);return}
   if(t&&e.key==='Enter'&&t.closest&&t.closest('#setEd .add')){e.preventDefault();var btn=t.closest('.add').querySelector('button');if(btn)btn.click()}
 });
 document.addEventListener('scroll',function(e){
