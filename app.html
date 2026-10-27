@@ -354,7 +354,7 @@ function subscribe(){
     applyCount();
     render();
   },500)};
-  rt=SB.channel('ihouse').on('postgres_changes',{event:'*',schema:'public',table:'devices'},ev).on('postgres_changes',{event:'*',schema:'public',table:'settings'},ev).on('postgres_changes',{event:'*',schema:'public',table:'ibot_messages'},ev).subscribe();
+  rt=SB.channel('ihouse').on('postgres_changes',{event:'*',schema:'public',table:'devices'},ev).on('postgres_changes',{event:'*',schema:'public',table:'settings'},function(p){onSettings(p);ev()}).on('postgres_changes',{event:'*',schema:'public',table:'ibot_messages'},ev).subscribe();
 }
 function tm(){return new Date().toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})}
 function sys(t){S.chat.push({id:++uid,dev:0,text:t,time:tm(),sys:true})}
@@ -393,6 +393,13 @@ function paintCount(){
     save();
   }else render();
 }
+function adoptCount(n){
+  if(n===S.count)return;
+  S.count=n;
+  try{var o=sSnap?JSON.parse(sSnap):{};o.people_count=n;sSnap=JSON.stringify(o)}catch(x){}
+  applyCount();
+  paintCount();
+}
 async function syncCount(){
   if(!ready||cntBusy||busy||timer||dirty||document.hidden)return;
   cntBusy=true;
@@ -400,15 +407,21 @@ async function syncCount(){
     var r=await SB.from('settings').select('people_count').eq('id',1).maybeSingle();
     if(r.error||!r.data)return;
     var n=Math.max(0,parseInt(r.data.people_count,10)||0);
-    if(busy||timer||dirty||n===S.count)return;
-    S.count=n;
-    try{var o=sSnap?JSON.parse(sSnap):{};o.people_count=n;sSnap=JSON.stringify(o)}catch(x){}
-    applyCount();
-    paintCount();
+    if(busy||timer||dirty)return;
+    adoptCount(n);
   }catch(x){console.warn('syncCount:',x&&x.message||x)}
   finally{cntBusy=false}
 }
-setInterval(syncCount,2000);
+/* eveniment realtime pe settings: numărul din payload se aplică pe loc, fără alt request */
+function onSettings(p,tries){
+  if(!ready)return;
+  var v=p&&p.new&&p.new.people_count;
+  if(v==null){syncCount();return}
+  var n=Math.max(0,parseInt(v,10)||0);
+  if((busy||timer||dirty)&&(tries||0)<10){setTimeout(function(){onSettings(p,(tries||0)+1)},150);return}
+  adoptCount(n);
+}
+setInterval(syncCount,1000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)syncCount()});
 var HEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>';
 var BULB='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
