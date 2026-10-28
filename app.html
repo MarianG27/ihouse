@@ -226,31 +226,24 @@ aside .nv .badge{position:absolute;top:5px;left:calc(50% + 8px);min-width:18px;h
 .ibotWrap{padding-bottom:calc(98px + env(safe-area-inset-bottom,0px))!important}
 body.kb .ibotWrap{padding-bottom:10px!important}
 }
-/* mesaj vocal */
-.ibot-rec{display:flex;align-items:center;gap:10px;padding:10px 0 0;flex-shrink:0;max-width:560px;width:100%}
-.ibot-rec .rbody{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-radius:40px;padding:0 16px;height:48px}
-.ibot-rec .dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex:none;animation:recdot 1.1s ease-in-out infinite}
-.ibot-rec .tm{font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;min-width:2.5em;flex:none}
-.ibot-rec .wv{flex:1;min-width:0;height:28px;display:flex;align-items:center;justify-content:flex-end;gap:2px;overflow:hidden}
-.ibot-rec .wv i{flex:1;max-width:4px;min-width:2px;border-radius:2px;background:var(--g);height:10%;transition:height .08s linear}
-.ibot-rec .lbl{flex:1;font-size:14px;color:var(--mut)}
-.ibot-rec .sp{display:none;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--g);border-radius:50%;animation:spin .8s linear infinite;flex:none}
-.ibot-rec .rb{width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
-.ibot-rec .rb svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ibot-rec .rx{background:#fff;color:var(--red);border:2px solid var(--line)}
-.ibot-rec .rx:hover{border-color:var(--red)}
-.ibot-rec .rs{background:var(--g);color:#fff}
-.ibot-rec .rs:hover{background:var(--gd)}
-.ibot-rec[data-st=recording] .lbl,.ibot-rec[data-st=recording] .sp{display:none}
-.ibot-rec[data-st=starting] .dot,.ibot-rec[data-st=starting] .tm,.ibot-rec[data-st=starting] .wv,.ibot-rec[data-st=processing] .dot,.ibot-rec[data-st=processing] .tm,.ibot-rec[data-st=processing] .wv{display:none}
-.ibot-rec[data-st=starting] .sp,.ibot-rec[data-st=processing] .sp{display:block}
-.ibot-rec[data-st=starting] .rs,.ibot-rec[data-st=processing] .rs{display:none}
-.wv.fake i{animation:wvp 1s ease-in-out infinite}
-.wv.fake i:nth-child(3n){animation-delay:.2s}.wv.fake i:nth-child(3n+1){animation-delay:.45s}
-@keyframes recdot{50%{opacity:.25}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes wvp{0%,100%{height:12%}50%{height:60%}}
-@media(prefers-reduced-motion:reduce){.ibot-rec .dot,.ibot-rec .sp,.wv.fake i{animation:none}}
+/* ascultare: strălucire verde pe margini, ca la Siri */
+.vglow{position:fixed;inset:0;z-index:55;pointer-events:none;opacity:0;transition:opacity .4s ease;border-radius:0}
+.vglow.on{opacity:1}
+.vglow:before{content:"";position:absolute;inset:0;border-radius:inherit;
+  box-shadow:inset 0 0 110px 18px rgba(24,153,71,.72),inset 0 0 40px 6px rgba(80,235,135,.65);
+  opacity:calc(.55 + var(--lv,0)*.45);animation:vgPulse 2.6s ease-in-out infinite;transition:opacity .08s linear}
+.vglow:after{content:"";position:absolute;inset:0;border-radius:inherit;
+  padding:calc(4px + var(--lv,0)*14px);
+  background:linear-gradient(90deg,#189947,#7dffa8,#e3ffec,#2fd16b,#0c5a29,#189947);background-size:300% 100%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  filter:blur(5px);animation:vgFlow 3.2s linear infinite;transition:padding .08s linear}
+.vglow.proc{--lv:.3}
+.vglow.proc:before{animation-duration:1.4s}
+@keyframes vgFlow{to{background-position:300% 0}}
+@keyframes vgPulse{50%{transform:scale(1.015)}}
+@media(max-width:800px){.vglow{border-radius:38px}}
+@media(prefers-reduced-motion:reduce){.vglow:before,.vglow:after{animation:none}}
 /* text selectabil / copiabil */
 .m,.m *,main p,main li,main h1,main h2,main h3{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 /* preferințe */
@@ -297,6 +290,7 @@ body.kb .ibotWrap{padding-bottom:10px!important}
 <main id="view"></main>
 </div>
 
+<div id="vglow" class="vglow" aria-hidden="true"></div>
 <div id="sy" class="hide" style="position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:#c4302b;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:30"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -528,28 +522,27 @@ function ibotReply(t){
 var vs='idle',vRec=null,vStream=null,vChunks=[],vMime='',vT0=0,vTok=0,vAC=null,vAn=null,vRaf=0,vHeard=false,vAlive=false,vMaxT=null,vStopT=null,vNoteT=null,vTick=null,vLvT=0,vLv=[];
 var VMAX=60000,VMIN=700,VBARS=40;
 function vNote(t){note(t);clearTimeout(vNoteT);if(t)vNoteT=setTimeout(function(){note('')},7000)}
-function micLbl(){return vs==='idle'?'Vorbește':vs==='processing'?'Se transcrie…':'Ascult…'}
+function micLbl(){return vs==='idle'?'Vorbește':vs==='recording'?'Gata':vs==='processing'?'Se transcrie…':'Se pornește…'}
 function updMicBtn(){var b=document.querySelector('[data-a="mic"]');if(b)b.textContent=micLbl()}
-/* arată bara de înregistrare în locul barei de text */
+/* strălucire pe margini + bara de text în starea „ascult” */
+var vLvS=0;
 function updMicUI(){
-  var rb=$('#recBar'),tb=document.querySelector('.ibot-bar');
-  if(!rb)return;
-  var on=vs!=='idle';
-  rb.classList.toggle('hide',!on);
-  if(tb)tb.classList.toggle('hide',on);
-  if(on){
-    rb.dataset.st=vs;
-    var l=$('#recL');if(l)l.textContent=vs==='starting'?'Se pornește microfonul…':vs==='processing'?'Se transcrie…':'';
+  var g=$('#vglow'),inp=$('#ibotIn'),sb=document.querySelector('.ibot-bar [data-a="send"]'),on=vs!=='idle';
+  if(g){g.classList.toggle('on',on);g.classList.toggle('proc',vs==='processing');if(vs!=='recording'){g.style.removeProperty('--lv');vLvS=0}}
+  if(sb)sb.textContent=on?'Anulează':'Trimite';
+  if(inp){
+    if(on){
+      if(inp.dataset.ph===undefined)inp.dataset.ph=inp.getAttribute('placeholder')||'';
+      inp.placeholder=vs==='recording'?'Te ascult…':vs==='processing'?'Se transcrie…':'Se pornește microfonul…';
+      inp.readOnly=true;
+    }else{
+      if(inp.dataset.ph!==undefined){inp.placeholder=inp.dataset.ph;delete inp.dataset.ph}
+      inp.readOnly=false;
+    }
   }
 }
 function vShow(){updMicUI()}
-function vTime(){var t=$('#recT');if(!t)return;var n=Math.floor((Date.now()-vT0)/1000);t.textContent=Math.floor(n/60)+':'+('0'+n%60).slice(-2)}
-function vWave(v){
-  var w=$('#recW');if(!w)return;
-  vLv.push(v);if(vLv.length>VBARS)vLv.shift();
-  var b=w.children,off=VBARS-vLv.length;
-  for(var i=0;i<b.length;i++){var x=i<off?0:vLv[i-off];b[i].style.height=Math.max(10,Math.round(x*100))+'%'}
-}
+function vGlow(v){vLvS=vLvS*0.55+v*0.45;var g=$('#vglow');if(g)g.style.setProperty('--lv',vLvS.toFixed(2))}
 function vStopTracks(s){if(s)s.getTracks().forEach(function(t){try{t.stop()}catch(x){}})}
 function vCleanup(){
   clearTimeout(vMaxT);clearTimeout(vStopT);clearInterval(vTick);cancelAnimationFrame(vRaf);vRaf=0;vAn=null;
@@ -609,7 +602,7 @@ function vMeter(stream){
       var rms=Math.sqrt(s/buf.length),now=Date.now();
       if(rms>0.0008)vAlive=true;
       if(rms>0.035)vHeard=true;
-      if(now-vLvT>70){vLvT=now;vWave(Math.min(1,rms*7))}
+      vGlow(Math.min(1,rms*7));
       vRaf=requestAnimationFrame(loop);
     })();
   }catch(x){vAn=null}
@@ -620,7 +613,7 @@ async function startMic(){
   if(!window.isSecureContext){vNote('Microfonul funcționează doar pe https sau localhost.');return}
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){vNote('Browserul nu permite accesul la microfon.');return}
   if(!window.MediaRecorder){vNote('Browserul nu suportă înregistrarea audio. Actualizează Chrome, Edge sau Safari.');return}
-  vs='starting';vHeard=false;vAlive=false;vLv=[];
+  vs='starting';vHeard=false;vAlive=false;
   var tok=++vTok;
   vPrimeAC();vShow();updMicBtn();
   var stream;
@@ -637,10 +630,8 @@ async function startMic(){
   r.onstop=function(){vOnStop(r,tok)};
   vT0=Date.now();
   try{r.start(250)}catch(e){vReset();vNote('Nu am putut porni înregistrarea.');return}
-  vs='recording';vShow();updMicBtn();vTime();
-  vTick=setInterval(vTime,250);
+  vs='recording';vShow();updMicBtn();
   vMeter(stream);
-  var w=$('#recW');if(w)w.classList.toggle('fake',!vAn);
   vMaxT=setTimeout(function(){if(tok===vTok&&vs==='recording')vStop(true)},VMAX);
 }
 function vStop(send){
@@ -681,10 +672,6 @@ async function vOnStop(r,tok){
     try{if(window.matchMedia&&matchMedia('(pointer:fine)').matches)inp.focus()}catch(x){}
   }
 }
-document.addEventListener('click',function(e){
-  var b=e.target.closest&&e.target.closest('[data-m]');if(!b)return;
-  if(b.dataset.m==='send')vStop(true);else if(b.dataset.m==='cancel')vReset();
-});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&vs!=='idle')vReset()});
 document.addEventListener('visibilitychange',function(){if(document.hidden&&(vs==='recording'||vs==='starting'))vReset()});
 var aiWait=false,popMsg=null,typer=null;
@@ -806,7 +793,7 @@ function render(){
     h='<div class="ibotWrap"><h1>ibot</h1><div class="chatBody">'+
     '<div class="thread ibot-thread">'+chatItems().join('')+'</div>'+
     '<button class="scrollTop" id="scrollTopBtn" data-a="totop" aria-label="Mergi la ultimul mesaj" title="Mergi la ultimul mesaj">↓</button></div>'+
-    '<div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="mic" aria-label="Vorbește cu ibot">'+micLbl()+'</button><button class="b s" data-a="send">Trimite</button></div>'+'<div class="ibot-rec hide" id="recBar" data-st="recording" role="group" aria-label="Mesaj vocal"><button type="button" class="rb rx" data-m="cancel" aria-label="Anulează mesajul vocal" title="Anulează"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button><div class="rbody"><span class="dot"></span><span class="tm" id="recT">0:00</span><span class="sp"></span><span class="lbl" id="recL"></span><div class="wv" id="recW" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><button type="button" class="rb rs" data-m="send" aria-label="Trimite mesajul vocal" title="Trimite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>'+'</div>';
+    '<div class="add ibot-bar" style="max-width:560px"><input type="text" id="ibotIn" placeholder="Scrie-i lui ibot..." aria-label="Mesaj către ibot"><button class="b s" data-a="mic" aria-label="Vorbește cu ibot">'+micLbl()+'</button><button class="b s" data-a="send">Trimite</button></div></div>';
   }else{
     h='<h1>Setări</h1>'+prefBox()+S.rooms.map(function(r){
       return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
@@ -854,7 +841,7 @@ document.addEventListener('click',function(e){
   else if(a==='at'){var ni=$('#ntn'),nm=ni.value.trim();if(!nm){ni.focus();return}var cd=nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'tip';if(S.types.some(function(x){return x.code===cd})){alert('Există deja un tip cu acest nume.');return}S.types.push({id:++uid,code:cd,name:nm,dimmable:false,default_watt:50,default_hours:2})}
   else if(a==='dt'){var tt2=S.types.filter(function(x){return x.id==b.dataset.t})[0];if(tt2&&S.rooms.some(function(rr){return rr.devices.some(function(dd){return dd.type===tt2.code})}))alert('Tipul este folosit de unele echipamente.');else S.types=S.types.filter(function(y){return y!==tt2})}
   else if(a==='mic'){startMic()}
-  else if(a==='send'){var i=$('#ibotIn');sendFree(i.value);i.value='';userSentFlag=true}
+  else if(a==='send'){if(vs!=='idle'){vReset();return}var i=$('#ibotIn');sendFree(i.value);i.value='';userSentFlag=true}
   else if(a==='askibot'){view='ibot';sendFree('Cum pot să economisesc curent electric?');userSentFlag=true}
   else if(a==='totop'){toBottom(true);return}
   render();
@@ -889,7 +876,7 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'&&dimId){dimId=null;render();return}
-  if(e.target&&e.target.id==='ibotIn'&&e.key==='Enter'){e.preventDefault();sendFree(e.target.value);e.target.value='';userSentFlag=true;render()}
+  if(e.target&&e.target.id==='ibotIn'&&e.key==='Enter'&&vs==='idle'){e.preventDefault();sendFree(e.target.value);e.target.value='';userSentFlag=true;render()}
 });
 document.addEventListener('scroll',function(e){
   var t=e.target;
