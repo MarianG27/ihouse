@@ -244,31 +244,6 @@ body.kb .ibotWrap{padding-bottom:10px!important}
 @keyframes vgPulse{50%{transform:scale(1.015)}}
 @media(max-width:800px){.vglow{border-radius:38px}}
 @media(prefers-reduced-motion:reduce){.vglow:before,.vglow:after{animation:none}}
-/* iHOUSE - monitorizare energie si stare hardware */
-.energy-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
-.energy-metric{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}
-.energy-metric small{font-size:12px;color:var(--mut);display:block}
-.energy-metric strong{font-size:clamp(19px,2.4vw,27px);font-weight:800;display:block;overflow-wrap:anywhere}
-.hw-pill{display:inline-flex;gap:7px;align-items:center;border-radius:999px;padding:6px 12px;background:#fff;border:1px solid var(--line);font-size:12px;font-weight:700}
-.hw-dot{width:9px;height:9px;border-radius:50%;background:#d58031}
-.hw-pill.online .hw-dot{background:var(--g)}
-.hw-pill.offline .hw-dot{background:var(--red)}
-.hw-alert{padding:13px 16px;margin:15px 0 0;border:1px solid #ecc7a4;background:#fff9ee;border-radius:14px;font-size:13px;color:#755020}
-.hw-alert.offline{background:#fff4f4;border-color:#ebc5c4;color:#8b2625}
-.tile:disabled,.bb:disabled,.sw:disabled,button:disabled{cursor:not-allowed!important;opacity:.45}
-.sim-stat{background:#eff8f1;border-radius:14px;padding:14px;min-width:0}
-.sim-stat small{display:block;color:var(--mut);font-size:12px}
-.sim-stat b{font-size:clamp(20px,2.6vw,28px)}
-.sim-progress{height:13px;border-radius:999px;background:#e1ebe3;overflow:hidden;margin:12px 0 6px}
-.sim-progress>div{height:100%;width:0;background:linear-gradient(90deg,#189947,#80d59f);transition:width .2s}
-.sim-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
-.sim-controls label{font-size:12px;color:var(--mut);font-weight:600}
-.sim-controls select{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}
-.sim-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.sim-rows{display:grid;gap:7px;margin-top:10px}
-.sim-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
-.sim-hint{font-size:12px;color:var(--mut);margin-top:12px}
-@media(max-width:800px){.energy-metrics,.sim-grid{grid-template-columns:minmax(0,1fr)}}
 /* text selectabil / copiabil */
 .m,.m *,main p,main li,main h1,main h2,main h3{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 /* preferințe */
@@ -325,105 +300,41 @@ var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'
 var SB=supabase.createClient('https://xqkrzcwatwjkgzylzhfu.supabase.co','sb_publishable_PkRAGJmaZgxb_skTsRCoKA_BCK8oHWL');
 var SCALE=1,BIG=1e9,uid=BIG,view='home',userSentFlag=false,dimId=null,focusDim=false;
 var S={count:0,off:false,price:0.95,chat:[],rooms:[],types:[],sched:[]},snap={},sSnap='',busy=false,dirty=false,timer=null,ready=false,rt=null,rtT=null;
-/* Starea hardware vine exclusiv din heartbeat-ul ESP32, nu din prezenta utilizatorului pe site. */
-var HW={configured:false,online:false,lastSeen:null,error:null};
-var ENERGY={configured:false,rows:[],lastFetch:null,error:null};
-var SIM={minute:0,running:false,updated:Date.now(),awayStart:8,awayEnd:17};
-function hardwareOnline(){return !!HW.configured&&!!HW.online}
-function hardwareLabel(){return !HW.configured?'Necesită configurare ESP32':HW.online?'ESP32 conectat':'ESP32 deconectat'}
-function controlsBlocked(){if(hardwareOnline())return false;note('Comenzile sunt blocate: ESP32 nu este conectat sau heartbeat-ul nu este configurat.');return true}
-function wattsNow(){var w=0;S.rooms.forEach(function(r){r.devices.forEach(function(d){if(d.on)w+=Math.max(0,+d.watt||0)})});return w}
-function eh(n,dig){return (+n||0).toLocaleString('ro-RO',{minimumFractionDigits:dig==null?3:dig,maximumFractionDigits:dig==null?3:dig})}
-function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val}
-function deferRender(){if(!ready)return;var a=document.activeElement;if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))return;if(!selBusy())render()}
-async function pollHardware(){
-  if(!ready)return;
-  try{
-    var q=await SB.from('ihouse_online').select('last_seen').eq('id',1).maybeSingle();
-    if(q.error)throw q.error;
-    var seen=q.data&&q.data.last_seen?Date.parse(q.data.last_seen):null;
-    var was=hardwareOnline(),configured=HW.configured;
-    HW.configured=true;HW.lastSeen=seen;HW.online=!!seen&&Date.now()-seen<25000&&Date.now()-seen>=-15000;HW.error=null;
-    if(was!==hardwareOnline()||configured!==HW.configured){if(HW.online)applyCount();deferRender()}
-    setText('hardwareState',hardwareLabel());
-  }catch(e){
-    var was=HW.configured||HW.online;
-    HW.configured=false;HW.online=false;HW.error='Configurează SQL-ul pentru monitorizarea ESP32.';
-    if(was)deferRender();
-  }
-}
-async function pollEnergy(){
-  if(!ready)return;
-  try{
-    var q=await SB.rpc('ihouse_energy_last_24h');if(q.error)throw q.error;
-    ENERGY.configured=true;ENERGY.rows=q.data||[];ENERGY.lastFetch=Date.now();ENERGY.error=null;
-  }catch(e){ENERGY.configured=false;ENERGY.rows=[];ENERGY.error='Istoricul necesită instalarea funcției SQL.'}
-  if(view==='home'){
-    var sum=ENERGY.rows.reduce(function(a,r){return a+Math.max(0,+r.kwh||0)},0);
-    setText('energy24',ENERGY.configured?eh(sum)+' kWh':'Neconfigurat');
-    setText('energy24hint',ENERGY.configured?'Estimare din evenimentele dispozitivelor, ultimele 24h':'Execută scriptul SQL inclus pentru istoricul de 24h.');
-    var hist=document.getElementById('energyDeviceRows');if(hist)hist.innerHTML=deviceHistoryHtml();
-  }
-}
-function simAwayMinutes(minute){
-  var t=Math.max(0,Math.min(1440,minute)),a=SIM.awayStart*60,b=SIM.awayEnd*60;
-  function ov(start,end){return Math.max(0,Math.min(t,end)-start)}
-  if(a===b)return 0;
-  return a<b?ov(a,b):ov(0,b)+ov(a,1440)
-}
-function simModel(minute){
-  var t=Math.max(0,Math.min(1440,minute)),away=simAwayMinutes(t),base=0,smart=0,devices=[];
-  S.rooms.forEach(function(r){r.devices.forEach(function(d){
-    var rate=Math.max(0,+d.watt||0)*Math.min(24,Math.max(0,+d.hours||0))/1440/1000;
-    var normal=rate*t,controlled=rate*(d.heart||d.essential?t:t-away),saved=Math.max(0,normal-controlled);
-    base+=normal;smart+=controlled;if(saved>0)devices.push({name:d.name,room:r.name,saved:saved});
-  })});
-  devices.sort(function(a,b){return b.saved-a.saved});
-  return {base:base,smart:smart,saved:Math.max(0,base-smart),pct:base>0?(base-smart)/base*100:0,devices:devices}
-}
-function simStart(){SIM.running=true;SIM.updated=Date.now()}
-function simPause(){simTick();SIM.running=false}
-function simTick(){
-  if(SIM.running){var now=Date.now();SIM.minute=Math.min(1440,SIM.minute+(now-SIM.updated)/1000);SIM.updated=now;if(SIM.minute>=1440)SIM.running=false}
-  var v=simModel(SIM.minute),h=Math.floor(SIM.minute/60),m=Math.floor(SIM.minute%60);
-  setText('simClock',String(Math.min(24,h)).padStart(2,'0')+':'+String(m).padStart(2,'0'));
-  setText('simBase',eh(v.base)+' kWh');setText('simSmart',eh(v.smart)+' kWh');setText('simSaved',eh(v.saved)+' kWh');
-  setText('simPercent',eh(v.pct,1)+'%');setText('simCost',eh(v.saved*S.price,3)+' lei');
-  var progress=document.getElementById('simProgress');if(progress){progress.style.width=(SIM.minute/1440*100).toFixed(2)+'%';progress.parentNode.setAttribute('aria-valuenow',String(Math.round(SIM.minute/1440*100)))}
-  var run=document.getElementById('simRun');if(run)run.textContent=SIM.running?'Pauză':'Pornește simularea';
-}
-function hourOptions(selected){var out='';for(var i=0;i<24;i++)out+='<option value="'+i+'"'+(i===selected?' selected':'')+'>'+String(i).padStart(2,'0')+':00</option>';return out}
-function deviceHistoryHtml(){
-  if(!ENERGY.configured)return '<p class="sim-hint">Istoricul per dispozitiv va apărea după instalarea scriptului SQL.</p>';
-  if(!ENERGY.rows.length)return '<p class="sim-hint">Nu există încă dispozitive în jurnal.</p>';
-  return ENERGY.rows.map(function(x){return '<div class="sim-row"><span>'+esc(x.device_name||'Dispozitiv')+'</span><strong>'+eh(+x.kwh||0,5)+' kWh</strong></div>'}).join('');
-}
-function energyPanel(){
-  var end=simModel(1440),top=end.devices.slice(0,6);
-  var list=top.length?top.map(function(x){return '<div class="sim-row"><span>'+esc(x.name)+' <small style="color:var(--mut)">('+esc(x.room)+')</small></span><strong>'+eh(x.saved*1000,2)+' Wh</strong></div>'}).join(''):'<p>Nu există dispozitive neprotejate cu putere și ore/zi configurate.</p>';
-  return '<div class="energy-metrics">'+
-    '<div class="energy-metric"><small>Putere estimată acum</small><strong id="powerNow">'+eh(wattsNow(),0)+' W</strong><small>Din stările salvate ale dispozitivelor (nu măsurare electrică)</small></div>'+
-    '<div class="energy-metric"><small>Energie estimată în ultimele 24 h</small><strong id="energy24">'+(ENERGY.configured?eh(ENERGY.rows.reduce(function(a,r){return a+(+r.kwh||0)},0))+' kWh':'Neconfigurat')+'</strong><small id="energy24hint">'+(ENERGY.configured?'Din evenimentele Supabase':'Necesită scriptul SQL pentru istoric')+'</small></div>'+
-    '<div class="energy-metric"><small>Disponibilitate hardware</small><strong id="hardwareState" style="font-size:16px">'+hardwareLabel()+'</strong><small>Heartbeat primit de la ESP32 la maximum 25 secunde</small></div></div>'+
-    '<div class="box" style="margin-top:16px"><h2>Simulator Smart Energy: 24 de ore în 24 de minute</h2><p>Compară utilizarea obișnuită cu scenariul în care iHOUSE oprește automat dispozitivele neesențiale când casa este goală.</p>'+
-    '<div class="sim-controls"><label>Casa goală de la <select id="awayStart" data-sim="start">'+hourOptions(SIM.awayStart)+'</select></label><label>până la <select id="awayEnd" data-sim="end">'+hourOptions(SIM.awayEnd)+'</select></label></div>'+
-    '<div class="ln"><strong>Ora simulată: <span id="simClock">00:00</span></strong><span>1 secundă = 1 minut simulat</span></div>'+
-    '<div class="sim-progress" role="progressbar" aria-label="Progres simulare" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="simProgress"></div></div>'+
-    '<div class="sim-controls"><button class="b s" id="simRun" data-a="simRun">'+(SIM.running?'Pauză':'Pornește simularea')+'</button><button class="b o s" data-a="simReset">Resetează</button><button class="b o s" data-a="simEnd">Vezi rezultatul 24h</button></div>'+
-    '<div class="sim-grid"><div class="sim-stat"><small>Fără automatizare</small><b id="simBase">0,000 kWh</b></div><div class="sim-stat"><small>Cu iHOUSE</small><b id="simSmart">0,000 kWh</b></div><div class="sim-stat"><small>Energie economisită</small><b id="simSaved">0,000 kWh</b><small><span id="simPercent">0,0%</span> · <span id="simCost">0,000 lei</span></small></div></div>'+
-    '<h2 style="margin-top:18px">Ce dispozitive pot economisi cel mai mult (simulare completă)</h2><div class="sim-rows">'+list+'</div>'+
-    '<h2 style="margin-top:18px">Consumul calculat per dispozitiv în ultimele 24h</h2><div class="sim-rows" id="energyDeviceRows">'+deviceHistoryHtml()+'</div>'+
-    '<p class="sim-hint"><strong>Metodă:</strong> puterea în W și orele/zi sunt cele din Setări. Simularea presupune că utilizarea zilnică este distribuită uniform pe 24h; când locuința este goală, consumul dispozitivelor neesențiale/neprotejate este eliminat. Nu pornește sau oprește componentele fizice. Rezultatele sunt teoretice și nu reprezintă economii măsurate.</p></div>';
-}
-
 var ms=function(t){return t?Date.parse(t):null},iso=function(n){return n?new Date(n).toISOString():null};
 function note(t){var n=$('#sy');n.textContent=t||'';n.classList.toggle('hide',!t)}
 function tyOf(d){return S.types.filter(function(t){return t.code===d.type})[0]||{}}
 function isDim(d){return !!tyOf(d).dimmable}
 function tn(d){return tyOf(d).name||d.type}
-var MAXCH=8;
+// iHOUSE - doua grupe fizice de iesiri; schema Supabase RAMANE devices.channel.
+// sPort 1-8 (ESP32) -> channel 1-8
+// nPort 1-4 (Nano, D4-D7) -> channel 9-12
+var SPORT_MAX=8, NPORT_MAX=4, NPORT_OFFSET=8;
 function isTV(d){return /televizor|\btv\b/i.test((tyOf(d).name||'')+' '+(d.name||''))}
-function chOpts(d){var o='<option value="0">—</option>';for(var i=1;i<=MAXCH;i++)o+='<option value="'+i+'"'+(d.channel===i?' selected':'')+'>Port '+i+'</option>';return o}
+function portInUse(channel, except){
+  var used=false;
+  S.rooms.forEach(function(r){r.devices.forEach(function(d){
+    if(d!==except&&d.channel===channel)used=true;
+  })});
+  return used;
+}
+function currentSPort(d){return d&&d.channel>=1&&d.channel<=SPORT_MAX?d.channel:0}
+function currentNPort(d){return d&&d.channel> NPORT_OFFSET&&d.channel<=NPORT_OFFSET+NPORT_MAX?d.channel-NPORT_OFFSET:0}
+function portOptions(d, board){
+  var nano=board==='nano', count=nano?NPORT_MAX:SPORT_MAX;
+  var selected=nano?currentNPort(d):currentSPort(d);
+  var text='<option value="0"'+(!selected?' selected':'')+'>—</option>';
+  for(var p=1;p<=count;p++){
+    var ch=nano?NPORT_OFFSET+p:p;
+    var label=nano?'nPort '+p+' · D'+(p+3):'sPort '+p+(p>6?' · OLED':' · ESP32');
+    var used=portInUse(ch,d||null);
+    text+='<option value="'+p+'"'+(selected===p?' selected':'')+(used?' disabled':'')+'>'+label+(used?' (ocupat)':'')+'</option>';
+  }
+  return text;
+}
+function portTag(d){
+  var sp=currentSPort(d),np=currentNPort(d);
+  return sp?'sPort '+sp+' (ESP32)':np?'nPort '+np+' (Nano D'+(np+3)+')':'Fără port';
+}
 function typeOpts(){return S.types.map(function(t){return '<option value="'+esc(t.code)+'">'+esc(t.name)+'</option>'}).join('')}
 function tRow(t){return {code:t.code,name:t.name,dimmable:!!t.dimmable,default_watt:t.default_watt||0,default_hours:t.default_hours||0}}
 function rRow(r,i){return {name:r.name,position:i}}
@@ -520,7 +431,6 @@ function prefBox(){
 }
 function selBusy(){try{var sl=window.getSelection();return !!(sl&&!sl.isCollapsed&&String(sl)&&$('#view').contains(sl.anchorNode))}catch(x){return false}}
 function applyCount(){
-  if(!hardwareOnline())return;
   if(S.count===0&&!S.off)offOn();
   else if(S.count>0&&S.off){S.off=false;S.rooms.forEach(function(r){r.devices.forEach(function(d){d.heartAsked=false})});sys('Cineva a intrat: Modul OFF s-a dezactivat.')}
 }
@@ -802,12 +712,12 @@ function typeOut(m){
     if(i<full.length)setTimeout(tick,18);else{typer=null;updBtn()}
   })();
 }
-function aiContext(){return {programari:S.sched.map(function(x){return {device_id:x.dev,peste_minute:Math.max(0,Math.round((x.at-Date.now())/60000)),actiune:x.on?'pornește':'oprește'}}),persoane:S.count,mod_off:!!S.off,esp32_online:hardwareOnline(),pret_kwh_lei:S.price,camere:S.rooms.map(function(r){return {camera:r.name,echipamente:r.devices.map(function(d){return {id:d.id,nume:d.name,tip:tn(d),reglabil:isDim(d),aprins:!!d.on,intensitate:d.level,watt:d.watt||0,ore_pe_zi:d.hours||0,kwh_pe_zi:kwh(d),esential:!!d.essential,protejat:!!d.heart,minute_aprins:d.on&&d.since?Math.round((Date.now()-d.since)/60000):0}})}})}}
+function aiContext(){return {programari:S.sched.map(function(x){return {device_id:x.dev,peste_minute:Math.max(0,Math.round((x.at-Date.now())/60000)),actiune:x.on?'pornește':'oprește'}}),persoane:S.count,mod_off:!!S.off,pret_kwh_lei:S.price,camere:S.rooms.map(function(r){return {camera:r.name,echipamente:r.devices.map(function(d){return {id:d.id,nume:d.name,tip:tn(d),reglabil:isDim(d),aprins:!!d.on,intensitate:d.level,watt:d.watt||0,ore_pe_zi:d.hours||0,kwh_pe_zi:kwh(d),esential:!!d.essential,protejat:!!d.heart,minute_aprins:d.on&&d.since?Math.round((Date.now()-d.since)/60000):0}})}})}}
 async function askAI(t){
   var hist=S.chat.filter(function(m){return m.me||m.free}).slice(-9,-1).map(function(m){return {role:m.me?'user':'assistant',content:m.text}});
   var r=await SB.functions.invoke('ibot',{body:{message:t,history:hist,context:aiContext()}});
   if(r.error||!r.data||r.data.error||!r.data.reply){console.warn('ibot AI:',r.error||(r.data&&r.data.error));return null}
-  (hardwareOnline()?r.data.actions||[]:[]).forEach(function(a){
+  (r.data.actions||[]).forEach(function(a){
     var d=find(+a.device_id);if(!d)return;
     if(a.cancel){S.sched=S.sched.filter(function(x){return x.dev!=d.id});return}
     var am=+a.after_minutes||0;
@@ -824,8 +734,7 @@ async function sendFree(t){
   aiWait=true;
   var txt=null;
   try{txt=await askAI(t)}catch(x){console.warn(x)}
-  if(txt==null)txt=hardwareOnline()?ibotReply(t):'ESP32 este deconectat. Pot oferi informații, dar nu execut comenzi pentru dispozitive.';
-  if(!hardwareOnline()&&txt&&/(?:am pornit|am oprit|am stins|am aprins|voi porni|voi stinge|am setat intensitatea)/i.test(txt))txt='ESP32 este deconectat. Comanda nu a fost executată.';
+  if(txt==null)txt=ibotReply(t);
   aiWait=false;
   var bm={id:++uid,free:true,text:txt,time:tm()};
   S.chat.push(bm);popMsg=bm;typer=bm;
@@ -872,10 +781,9 @@ function render(){
   var h='';
   if(view==='home'){
     var z=S.count===0,l=onList();
-    h='<h1>Acasă</h1><div class="hero'+(z?' z':'')+'"><div class="num">'+S.count+'</div><div class="t"><b>'+(z?'Persoane în casă: 0 – Mod OFF activat':'Persoane în casă: '+S.count)+'</b><span>Numărate de cele două lasere de la intrare.</span></div></div>'+
-    '<div class="two"><div class="box"><div class="ln"><div><h2>Modul OFF</h2><p>'+(S.off?'Activ: consumul neesențial e oprit.':'Oprit: casa funcționează normal.')+'</p></div><button class="sw" role="switch" aria-label="Modul OFF" aria-checked="'+S.off+'" data-a="off"'+(!hardwareOnline()?' disabled title="ESP32 deconectat"':'')+'></button></div></div>'+
+    h='<h1>Acasă</h1><div class="hero'+(z?' z':'')+'"><div class="num">'+S.count+'</div><div class="t"><b>'+(z?'Persoane în casă: 0 – Mod OFF activat':'Persoane în casă: '+S.count)+'</b><span>Numărate de cele două lasere de la intrare.</span><div class="row"><button class="b s" data-a="in">Simulează intrare</button><button class="b s" data-a="exit">Simulează ieșire</button></div></div></div>'+
+    '<div class="two"><div class="box"><div class="ln"><div><h2>Modul OFF</h2><p>'+(S.off?'Activ: consumul neesențial e oprit.':'Oprit: casa funcționează normal.')+'</p></div><button class="sw" role="switch" aria-label="Modul OFF" aria-checked="'+S.off+'" data-a="off"></button></div></div>'+
     '<div class="box"><h2>Aprinse acum: '+l.length+'</h2>'+(l.length?'<ul>'+l.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<p>Nimic nu consumă în acest moment.</p>')+'</div></div>';
-    h+='<div class="hw-alert'+(HW.configured&&!HW.online?' offline':'')+'">'+(hardwareOnline()?'Heartbeat ESP32 detectat. Comenzile pot fi trimise către baza de date (executarea fizică trebuie confirmată de firmware).':'Comenzile hardware sunt blocate până când ESP32 transmite heartbeat în Supabase. Istoricul și simularea pot fi consultate separat.')+'</div>'+energyPanel();
     var maxRoom=Math.max.apply(null,S.rooms.map(roomKwh).concat([0.0001]));
     var chartBars=S.rooms.map(function(r){
       var v=roomKwh(r),pct=Math.max(2,Math.round(v/maxRoom*100));
@@ -898,16 +806,16 @@ function render(){
     devs.sort(function(a,b){return kwh(b)-kwh(a)});
     var maxD=devs.length?kwh(devs[0]):1;
     var devBars=devs.map(function(d){return '<div class="cb-row"><span class="cb-label">'+esc(d.name)+'</span><div class="cb-track"><div class="cb-fill" style="width:'+Math.max(2,Math.round(kwh(d)/maxD*100))+'%"></div></div><span class="cb-val">'+n2(kwh(d))+' kWh</span></div>'}).join('');
-    var grHtml=tk>0?'<p class="sub">Pe camere (planificat)</p><div class="gr"><svg class="donut" viewBox="0 0 42 42" role="img" aria-label="Consum pe camere"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="#eef2ef" stroke-width="7"></circle>'+segs+'<text x="21" y="21.5" font-size="5.2" font-weight="800" fill="#17201b">'+n2(tk)+'</text><text x="21" y="26.5" font-size="2.8" fill="#56645b">kWh/zi</text></svg><div class="lg">'+leg+'</div></div><p class="sub">Pe echipament</p><div class="chart">'+devBars+'</div><p style="font-size:13px;color:var(--mut);margin-bottom:6px">Total: <b style="color:var(--ink)">'+n2(tk)+' kWh</b> · <b style="color:var(--ink)">'+n2(totalCost())+' lei</b> pe zi</p>':'<p style="color:var(--mut)">Adaugă camere și echipamente cu putere și ore/zi ca să vezi graficul de consum.</p>';
+    var grHtml=tk>0?'<p class="sub">Pe camere</p><div class="gr"><svg class="donut" viewBox="0 0 42 42" role="img" aria-label="Consum pe camere"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="#eef2ef" stroke-width="7"></circle>'+segs+'<text x="21" y="21.5" font-size="5.2" font-weight="800" fill="#17201b">'+n2(tk)+'</text><text x="21" y="26.5" font-size="2.8" fill="#56645b">kWh/zi</text></svg><div class="lg">'+leg+'</div></div><p class="sub">Pe echipament</p><div class="chart">'+devBars+'</div><p style="font-size:13px;color:var(--mut);margin-bottom:6px">Total: <b style="color:var(--ink)">'+n2(tk)+' kWh</b> · <b style="color:var(--ink)">'+n2(totalCost())+' lei</b> pe zi</p>':'<p style="color:var(--mut)">Adaugă camere și echipamente cu putere și ore/zi ca să vezi graficul de consum.</p>';
     var tblHtml='<div class="tblwrap"><table class="tbl"><thead><tr><th>Echipament</th><th>Cameră</th><th>Putere</th><th>Ore/zi</th><th>kWh/zi</th><th>Cost/zi</th></tr></thead><tbody>'+(tableRows.join('')||'<tr><td colspan="6" style="color:var(--mut)">Niciun echipament.</td></tr>')+'</tbody><tfoot><tr><td colspan="4">Total</td><td>'+n2(totalKwh())+' kWh</td><td>'+n2(totalCost())+' lei</td></tr></tfoot></table></div>';
     var tgl='<div class="seg" role="group" aria-label="Mod afișare"><button class="'+(cv==='graf'?'on':'')+'" data-a="cv" data-c="graf" aria-pressed="'+(cv==='graf')+'">Grafic</button><button class="'+(cv==='tab'?'on':'')+'" data-a="cv" data-c="tab" aria-pressed="'+(cv==='tab')+'">Tabel</button></div>';
-    h+='<div class="box" style="margin-top:16px"><div class="ln" style="margin-bottom:14px;flex-wrap:wrap;gap:10px"><h2 style="margin:0">Consum zilnic planificat (W × ore/zi)</h2><label class="priceLbl">Preț/kWh<input type="number" min="0" step="0.01" id="price" value="'+(S.price||0)+'" class="priceIn" aria-label="Preț per kWh"><span>lei</span></label></div>'+
+    h+='<div class="box" style="margin-top:16px"><div class="ln" style="margin-bottom:14px;flex-wrap:wrap;gap:10px"><h2 style="margin:0">Consum de electricitate estimat</h2><label class="priceLbl">Preț/kWh<input type="number" min="0" step="0.01" id="price" value="'+(S.price||0)+'" class="priceIn" aria-label="Preț per kWh"><span>lei</span></label></div>'+
     tgl+(cv==='tab'?tblHtml:grHtml)+
     '<button class="b" data-a="askibot" style="margin-top:16px">Întreabă ibot cum să economisești</button></div>';
   }else if(view==='rooms'){
     h='<h1>Camere</h1>'+S.rooms.map(function(r){
       return '<div class="sec">'+esc(r.name)+'<small>Apasă pe un card ca să-l pornești sau să-l oprești</small></div><div class="tiles">'+(r.devices.length?r.devices.map(function(d){
-        return '<div class="cell'+(isDim(d)?' lt':'')+'"><button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+'"'+(!hardwareOnline()?' disabled title="ESP32 deconectat"':'')+'><div class="top"><b>'+esc(d.name)+'</b>'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează" role="img" aria-label="Protejat">'+HEART+'</span>':'')+'</div><small>'+tn(d)+(d.essential?' esențială':'')+'</small></button>'+(isDim(d)?'<button class="bb" data-a="dim" data-d="'+d.id+'"'+(!hardwareOnline()?' disabled':'')+' aria-label="Intensitate '+esc(d.name)+'" title="Intensitate">'+BULB+'</button>':'')+'</div>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
+        return '<div class="cell'+(isDim(d)?' lt':'')+'"><button class="tile'+(d.on?' on':'')+'" data-a="tg" data-d="'+d.id+'" aria-pressed="'+d.on+'" aria-label="'+esc(d.name)+(d.on?', aprins':', stins')+'"><div class="top"><b>'+esc(d.name)+'</b>'+(d.heart?'<span class="hrt" title="Protejat: nu se oprește automat cât rulează" role="img" aria-label="Protejat">'+HEART+'</span>':'')+'</div><small>'+tn(d)+' · '+portTag(d)+(d.essential?' · esențială':'')+'</small></button>'+(isDim(d)?'<button class="bb" data-a="dim" data-d="'+d.id+'" aria-label="Intensitate '+esc(d.name)+'" title="Intensitate">'+BULB+'</button>':'')+'</div>'}).join(''):'<p style="color:var(--mut)">Camera nu are echipamente. Adaugă-le din Setări.</p>')+'</div>'}).join('')||'<p>Nu ai nicio cameră. Adaug-o din Setări.</p>';
   }else if(view==='ibot'){
     h='<div class="ibotWrap"><h1>ibot</h1><div class="chatBody">'+
     '<div class="thread ibot-thread">'+chatItems().join('')+'</div>'+
@@ -916,15 +824,15 @@ function render(){
   }else{
     h='<h1>Setări</h1>'+prefBox()+S.rooms.map(function(r){
       return '<div class="set"><h3><input type="text" value="'+esc(r.name)+'" data-k="rn" data-r="'+r.id+'" aria-label="Numele camerei"><button class="b r s" data-a="dr" data-r="'+r.id+'">Șterge camera</button></h3>'+
-      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><div><select data-k="ch" data-d="'+d.id+'" aria-label="Port ESP32">'+chOpts(d)+'</select><small>Port ESP32</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
-      '<div class="add"><input type="text" placeholder="Echipament nou" aria-label="Echipament nou"><select aria-label="Tip">'+typeOpts()+'</select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
-      '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div>'+typesBox()+'<p style="font-size:13px;color:var(--mut)">Check 0 înseamnă că ibot nu întreabă.</p>';
+      r.devices.map(function(d){return '<div class="dr"><div><input type="text" value="'+esc(d.name)+'" data-k="dn" data-d="'+d.id+'" aria-label="Nume echipament"><small>'+tn(d)+'</small></div><div><input type="number" min="0" value="'+(d.watt||0)+'" data-k="wt" data-d="'+d.id+'" aria-label="Putere în wați"><small>W</small></div><div><input type="number" min="0" step="0.1" value="'+(d.hours!=null?d.hours:0)+'" data-k="hr" data-d="'+d.id+'" aria-label="Ore de utilizare pe zi"><small>ore/zi</small></div><div><input type="number" min="0" value="'+d.check+'" data-k="ck" data-d="'+d.id+'" aria-label="Minute pentru check"><small>minute check</small></div><div><select data-k="sp" data-d="'+d.id+'" aria-label="sPort ESP32">'+portOptions(d,'esp')+'</select><small>sPort · ESP32</small></div><div><select data-k="np" data-d="'+d.id+'" aria-label="nPort Arduino Nano">'+portOptions(d,'nano')+'</select><small>nPort · Nano</small></div><label><input type="checkbox" data-k="es" data-d="'+d.id+'"'+(d.essential?' checked':'')+'>Esențial</label><button type=\"button\" class=\"hbtn\" data-a=\"ht\" data-d=\"'+d.id+'\" aria-pressed=\"'+(d.heart?'true':'false')+'\" title=\"Nu se oprește automat la Modul OFF cât timp rulează. ibot te întreabă și îl oprește singur când se termină programul (ex: mașina de spălat)\">'+HEART+'Protejat</button><button class="b r s" data-a="dd" data-d="'+d.id+'">Șterge</button></div>'}).join('')+
+      '<div class="add" style="flex-wrap:wrap"><input type="text" placeholder="Echipament nou (ex: Priză)" aria-label="Echipament nou"><select data-new-type="1" aria-label="Tip echipament">'+typeOpts()+'</select><select data-new-sport="1" aria-label="sPort ESP32 nou">'+portOptions(null,'esp')+'</select><select data-new-nport="1" aria-label="nPort Nano nou">'+portOptions(null,'nano')+'</select><button class="b s" data-a="ad" data-r="'+r.id+'">Adaugă</button></div></div>'}).join('')+
+      '<div class="set"><div class="add" style="margin:0"><input type="text" id="nr" placeholder="Cameră nouă (ex: Birou)" aria-label="Cameră nouă"><button class="b s" data-a="ar">Adaugă camera</button></div></div>'+typesBox()+'<p style="font-size:13px;color:var(--mut)"><b>sPort 1–8</b> controlează dispozitivele de pe ESP32 (1–6 becuri, 7–8 OLED-uri). <b>nPort 1–4</b> controlează ieșirile de pe Arduino Nano (D4–D7). Pentru <b>Priză</b>, alege <b>nPort 1</b> — LED-ul roșu; nu o priză de 230 V. Alege un singur tip de port pentru fiecare dispozitiv. Check 0 înseamnă că ibot nu întreabă.</p>';
   }
   if(view==='rooms'&&dimId){var dd=find(dimId);if(dd&&isDim(dd))h+=dimSheet(dd);else dimId=null}
   var vw=$('#view');
   if(view==='ibot'&&vw.dataset.v==='ibot'&&thr()){syncThread(thr());var mb=document.querySelector('[data-a="mic"]');if(mb)mb.textContent=micLbl()}
   else{vw.innerHTML=h;vw.dataset.v=view;if(thr())thr()._items=chatItems().map(function(x){return x.replace(' pop"','"')})}
-  popMsg=null;updMicUI();save();if(view==='home')simTick();
+  popMsg=null;updMicUI();save();
   if(focusDim){var fi=$('#dimIn');if(fi)fi.focus();focusDim=false}
   if(view==='ibot'){
     var nin=$('#ibotIn');
@@ -941,10 +849,6 @@ document.addEventListener('click',function(e){
   if(b.dataset.v&&vs!=='idle')vReset();
   if(b.dataset.v){dimId=null;view=b.dataset.v;if(view==='ibot')userSentFlag=true;render();return}
   var a=b.dataset.a,d=b.dataset.d?find(b.dataset.d):null,r=S.rooms.filter(function(x){return x.id==b.dataset.r})[0],m=S.chat.filter(function(x){return x.id==b.dataset.n})[0];
-  if(a==='simRun'){if(SIM.minute>=1440){SIM.minute=0;SIM.running=false}if(SIM.running)simPause();else simStart();simTick();return}
-  if(a==='simReset'){SIM.running=false;SIM.minute=0;SIM.updated=Date.now();simTick();return}
-  if(a==='simEnd'){SIM.running=false;SIM.minute=1440;simTick();return}
-  if(['in','exit','off','tg','dim','nstop','nkeep','hset','hstop'].indexOf(a)!==-1 && controlsBlocked())return;
   if(a==='in')setCount(S.count+1);
   else if(a==='exit')setCount(S.count-1);
   else if(a==='off'){if(S.off){S.off=false;S.rooms.forEach(function(rr){rr.devices.forEach(function(dd){dd.heartAsked=false})});sys('Modul OFF dezactivat manual.')}else offOn()}
@@ -959,7 +863,18 @@ document.addEventListener('click',function(e){
   else if(a==='hstop'&&m){setDev(find(m.dev),false);m.done='Oprire imediată';userSentFlag=true}
   else if(a==='dr'){if(confirm('Ștergi camera „'+r.name+'” și tot ce conține?'))S.rooms=S.rooms.filter(function(y){return y!==r})}
   else if(a==='dd')S.rooms.forEach(function(y){y.devices=y.devices.filter(function(z){return z!==d})});
-  else if(a==='ad'){var i=b.parentNode.querySelector('input');if(!i.value.trim()){i.focus();return}var tc=b.parentNode.querySelector('select').value,tt=S.types.filter(function(x){return x.code===tc})[0]||{};r.devices.push({id:++uid,name:i.value.trim(),type:tc,on:false,check:0,level:1,watt:tt.default_watt||0,hours:tt.default_hours||0})}
+  else if(a==='ad'){
+    var wrap=b.parentNode,inp=wrap.querySelector('input');
+    if(!inp.value.trim()){inp.focus();return}
+    var tc=wrap.querySelector('select[data-new-type]').value;
+    var sp=+wrap.querySelector('select[data-new-sport]').value||0;
+    var np=+wrap.querySelector('select[data-new-nport]').value||0;
+    if(sp&&np){note('Alege doar sPort sau nPort pentru un dispozitiv.');return}
+    var ch=np?NPORT_OFFSET+np:(sp||null);
+    if(ch&&portInUse(ch,null)){note('Portul este deja ocupat de alt dispozitiv.');return}
+    var tt=S.types.filter(function(x){return x.code===tc})[0]||{};
+    r.devices.push({id:++uid,name:inp.value.trim(),type:tc,channel:ch,on:false,check:0,level:1,watt:tt.default_watt||0,hours:tt.default_hours||0});
+  }
   else if(a==='ar'){var n=$('#nr');if(!n.value.trim()){n.focus();return}S.rooms.push({id:++uid,name:n.value.trim(),devices:[]})}
   else if(a==='at'){var ni=$('#ntn'),nm=ni.value.trim();if(!nm){ni.focus();return}var cd=nm.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'tip';if(S.types.some(function(x){return x.code===cd})){alert('Există deja un tip cu acest nume.');return}S.types.push({id:++uid,code:cd,name:nm,dimmable:false,default_watt:50,default_hours:2})}
   else if(a==='dt'){var tt2=S.types.filter(function(x){return x.id==b.dataset.t})[0];if(tt2&&S.rooms.some(function(rr){return rr.devices.some(function(dd){return dd.type===tt2.code})}))alert('Tipul este folosit de unele echipamente.');else S.types=S.types.filter(function(y){return y!==tt2})}
@@ -971,9 +886,15 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('change',function(e){
   var t=e.target;
+  if(t.matches&&t.matches('select[data-new-sport],select[data-new-nport]')){
+    if(+t.value){
+      var other=t.parentNode.querySelector(t.hasAttribute('data-new-sport')?'select[data-new-nport]':'select[data-new-sport]');
+      if(other)other.value='0';
+    }
+    return;
+  }
   if(t.name==='prefVoice'){prefSet('voice',t.value);return}
   if(t.id==='price'){S.price=Math.max(0,+t.value||0);render();return}
-  if(t.dataset.sim){if(t.dataset.sim==='start')SIM.awayStart=Math.max(0,Math.min(23,+t.value||0));if(t.dataset.sim==='end')SIM.awayEnd=Math.max(0,Math.min(23,+t.value||0));SIM.running=false;SIM.minute=0;render();return}
   var k=t.dataset.k;if(!k)return;
   if(t.dataset.t){var tt=S.types.filter(function(x){return x.id==t.dataset.t})[0];if(tt){if(k==='tn'&&t.value.trim())tt.name=t.value.trim();if(k==='td')tt.dimmable=t.checked;if(k==='tw')tt.default_watt=Math.max(0,+t.value||0);if(k==='th')tt.default_hours=Math.max(0,+t.value||0)}save();render();return}
   if(k==='rn'){var r=S.rooms.filter(function(x){return x.id==t.dataset.r})[0];if(t.value.trim())r.name=t.value.trim()}
@@ -983,13 +904,25 @@ document.addEventListener('change',function(e){
     if(k==='hr')d.hours=Math.max(0,+t.value||0);
     if(k==='ck'){d.check=Math.max(0,Math.round(+t.value||0));d.asked=false;if(d.on)d.since=Date.now()}
     if(k==='es')d.essential=t.checked;
-    if(k==='ch'){var v=+t.value||null;if(v)S.rooms.forEach(function(rr){rr.devices.forEach(function(x){if(x!==d&&x.channel===v)x.channel=null})});d.channel=v;save();render();return}}
+    if(k==='sp'||k==='np'){
+      var p=+t.value||0;
+      var ch=p?(k==='np'?NPORT_OFFSET+p:p):null;
+      if(ch&&portInUse(ch,d)){
+        note('Acest '+(k==='np'?'nPort':'sPort')+' este deja ocupat.');render();return;
+      }
+      // Un dispozitiv este legat la o singura placa, nu la ambele.
+      // Optiunea — pentru selectorul inactiv nu trebuie sa stearga portul celeilalte placi.
+      if(!p){
+        if((k==='sp'&&currentSPort(d))||(k==='np'&&currentNPort(d)))d.channel=null;
+      }else d.channel=ch;
+      save();render();return;
+    }}
   save();
 });
 document.addEventListener('input',function(e){
   var t=e.target;
   if(!t.dataset||t.dataset.k!=='lv')return;
-  var d=find(t.dataset.d);if(!d||controlsBlocked())return;
+  var d=find(t.dataset.d);if(!d)return;
   var v=Math.min(1,Math.max(0,+t.value||0));
   d.level=v;
   if(v>0&&!d.on)setDev(d,true);else if(v===0&&d.on)setDev(d,false);
@@ -1019,23 +952,20 @@ document.addEventListener('pointerdown',function(e){var a=document.activeElement
 function show(v){$('#login').classList.toggle('hide',v);$('#app').classList.toggle('hide',!v);if(v)render()}
 async function enter(){
   try{await load()}catch(x){await SB.auth.signOut();$('#lerr').textContent=x.message||'Eroare la încărcare.';show(false);return}
-  ready=true;show(true);subscribe();pollHardware();pollEnergy();
+  ready=true;show(true);subscribe();
 }
 $('#lf').onsubmit=async function(e){e.preventDefault();$('#lerr').textContent='';var r=await SB.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error){$('#lerr').textContent='Email sau parolă greșite.';return}enter()};
-$('#out').onclick=async function(){ready=false;HW.online=false;if(rt)SB.removeChannel(rt);await SB.auth.signOut();show(false)};
+$('#out').onclick=async function(){ready=false;if(rt)SB.removeChannel(rt);await SB.auth.signOut();show(false)};
 SB.auth.getSession().then(function(r){if(r.data&&r.data.session)enter()});
 
-setInterval(function(){if(ready&&view==='home')simTick()},250);
-setInterval(pollHardware,5000);
-setInterval(pollEnergy,15000);
 setInterval(function(){
   var ch=false,now=Date.now();
   S.rooms.forEach(function(r){r.devices.forEach(function(d){
-    if(hardwareOnline()&&d.on&&d.heartUntil&&now>=d.heartUntil){setDev(d,false);sys(d.name+': programul s-a terminat, priza a fost oprită.');ch=true}
+    if(d.on&&d.heartUntil&&now>=d.heartUntil){setDev(d,false);sys(d.name+': programul s-a terminat, priza a fost oprită.');ch=true}
     if(d.on&&d.check>0&&!d.asked&&d.since&&(now-d.since)/1000*SCALE/60>=d.check){
       d.asked=true;S.chat.push({id:++uid,dev:d.id,text:(isTV(d)?'Te mai uiți la '+d.name.toLowerCase()+'? Rulează de '+d.check+' minute.':'Mai folosești '+d.name.toLowerCase()+'? Nu a mai fost stinsă de '+d.check+' minute.'),time:tm(),done:null});ch=true}
   })});
-  if(hardwareOnline()&&S.sched.length){var due=S.sched.filter(function(x){return x.at<=now});
+  if(S.sched.length){var due=S.sched.filter(function(x){return x.at<=now});
     if(due.length){S.sched=S.sched.filter(function(x){return x.at>now});due.forEach(function(x){var d=find(x.dev);if(!d)return;if(!x.on&&d.essential)return;setDev(d,x.on);sys('Programare executată: am '+(x.on?'pornit ':'oprit ')+d.name.toLowerCase()+'.')});ch=true}}
   if(ch&&!$('#app').classList.contains('hide')&&view!=='set'&&!selBusy())render();else if(ch)save();
 },1000);
